@@ -31,6 +31,7 @@ global old_path "D:/data"
 global output_path "H:/Ashwin/dta/final"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
+global delim_path "H:/Ashwin/output"
 
 *--------------------------------------------------------
 ** Comparing new 2a2b data with old 2a2b data
@@ -205,10 +206,11 @@ bro if Mtin == "" //99.99% data present
 bro if SellerBuyerTin == "" // 99.99% data present
 
 *--------------------------------------------------------
-** Aggregating Type 1 & 2 values and checking with Form 16
+** Aggregating Type 1 & 2 values of 2a2b & checking with Form 16
 *--------------------------------------------------------
 
 ** Quarterly 2014-15 data
+	/* Summing values for different catergories */
 use "${output_path}/2a2b_quarterly_2014.dta", clear
 
 bysort SaleOrPurchase SalePurchaseType DealerGoodType TransactionType ///
@@ -223,9 +225,11 @@ keep SaleOrPurchase SalePurchaseType DealerGoodType TransactionType ///
 duplicates drop SaleOrPurchase SalePurchaseType TaxPeriod, force
 
 save "${temp_path1}/2a2b_aggregated.dta", replace
-export excel "$
+export excel "${delim_path}/2a2b_comparison_data.xlsx", ///
+			firstrow(variables) she("2a2b_2014_quarterly") sheetmodify
 
-*Form 16 data
+** Form 16 data
+	/* Summing all the variables of form16 at quarterly level */
 use "${output_path}\form16_data_consolidated.dta", clear
 
 *Retaining the latest return per dealer
@@ -234,12 +238,136 @@ duplicates drop TaxPeriod Mtin, force
 
 collapse (sum) *Turnover* *OutputTax* *Labor* *Land* *Purchase* *Sale* Credit* *Credit WCCredit*, by(TaxPeriod)
 save "${temp_path1}/form16_data_aggregated.dta" ,replace
+export excel "${delim_path}/2a2b_comparison_data.xlsx", ///
+			firstrow(variables) she("form16_aggregated") sheetmodify
 
+// Numbers don't match Location- H:/Ashwin/dta/temp/2a2b_comparison_data.xlsx
 
+*--------------------------------------------------------
+** Comparing Mtin values 
+*--------------------------------------------------------
 
+** Extract Mtin from 2a2b information
 
+use "${output_path}/2a2b_monthly_2012.dta", clear
+keep Mtin MReturn_ID SellerBuyerTin OriginalTaxPeriod
+duplicates drop
+save "${temp_path1}/2a2b_tin.dta", replace
 
+foreach var in 2013 2014 2015 {
+use "${output_path}/2a2b_quarterly_`var'.dta", clear
+keep Mtin MReturn_ID SellerBuyerTin OriginalTaxPeriod
+duplicates drop
+append using "${temp_path1}/2a2b_tin.dta"
+save "${temp_path1}/2a2b_tin.dta", replace 
+}
 
+** Compare Mtin & Return_Ids from 2a2b and Tin
+* Load Tin values from 2a2b
+use "${temp_path1}/2a2b_tin.dta", clear
+
+*rename TaxPeriod for merging
+rename OriginalTaxPeriod TaxPeriod
+label variable TaxPeriod "OriginalTaxPeriod"
+
+replace TaxPeriod = "First Quarter-2013" if TaxPeriod == "First Quarter 2013"
+replace TaxPeriod = "First Quarter-2014" if TaxPeriod == "First Quarter 2014"
+replace TaxPeriod = "First Quarter-2015" if TaxPeriod == "First Quarter 2015"
+
+replace TaxPeriod = "Second Quarter-2013" if TaxPeriod == "Second Quarter 2013"
+replace TaxPeriod = "Second Quarter-2014" if TaxPeriod == "Second Quarter 2014"
+replace TaxPeriod = "Second Quarter-2015" if TaxPeriod == "Second Quarter 2015"
+
+replace TaxPeriod = "Third Quarter-2013" if TaxPeriod == "Third Quarter 2013"
+replace TaxPeriod = "Third Quarter-2014" if TaxPeriod == "Third Quarter 2014"
+replace TaxPeriod = "Third Quarter-2015" if TaxPeriod == "Third Quarter 2015"
+
+replace TaxPeriod = "Fourth Quarter-2013" if TaxPeriod == "Fourth Quarter 2013"
+replace TaxPeriod = "Fourth Quarter-2014" if TaxPeriod == "Fourth Quarter 2014"
+replace TaxPeriod = "Fourth Quarter-2015" if TaxPeriod == "Fourth Quarter 2015"
+
+replace TaxPeriod = "Jan-2012" if TaxPeriod == "jan 2012"
+replace TaxPeriod = "Feb-2012" if TaxPeriod == "feb 2012"
+replace TaxPeriod = "Mar-2012" if TaxPeriod == "mar 2012"
+replace TaxPeriod = "Apr-2012" if TaxPeriod == "apr 2012"
+replace TaxPeriod = "May-2012" if TaxPeriod == "may 2012"
+replace TaxPeriod = "Jun-2012" if TaxPeriod == "jun 2012"
+replace TaxPeriod = "Jul-2012" if TaxPeriod == "jul 2012"
+replace TaxPeriod = "Aug-2012" if TaxPeriod == "aug 2012"
+replace TaxPeriod = "Sep-2012" if TaxPeriod == "sep 2012"
+replace TaxPeriod = "Oct-2012" if TaxPeriod == "oct 2012"
+replace TaxPeriod = "Nov-2012" if TaxPeriod == "nov 2012"
+replace TaxPeriod = "Dec-2012" if TaxPeriod == "dec 2012"
+replace TaxPeriod = "Jan-2013" if TaxPeriod == "jan 2013"
+replace TaxPeriod = "Feb-2013" if TaxPeriod == "feb 2013"
+replace TaxPeriod = "Mar-2013" if TaxPeriod == "mar 2013"
+
+save "${temp_path1}/2a2b_tin.dta", replace
+
+* To merge Mtins, bring the data to Mtin Taxperiod level
+duplicates drop Mtin TaxPeriod, force
+save "${temp_path1}/2a2b_tin_temp.dta", replace 
+
+use "${output_path}/unique_mtin_form16.dta", clear
+merge 1:1 Mtin TaxPeriod using "${temp_path1}/2a2b_tin_temp.dta"
+/*
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                     4,120,597
+        from master                 2,672,656  (_merge==1)
+        from using                  1,447,941  (_merge==2)
+
+    matched                         2,703,311  (_merge==3)
+    -----------------------------------------
+
+*/
+// Not perfect mapping when merged at Mtin-TaxPeriod
+
+* Merge at only Mtin level
+use "${temp_path1}/2a2b_tin.dta", clear
+duplicates drop Mtin, force
+save "${temp_path1}/2a2b_tin_temp.dta", replace
+
+use "${output_path}/unique_mtin_form16.dta", clear
+merge m:1 Mtin using "${temp_path1}/2a2b_tin_temp.dta"
+
+/*
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       455,183
+        from master                   444,375  (_merge==1)
+        from using                     10,808  (_merge==2)
+
+    matched                         4,931,592  (_merge==3)
+    -----------------------------------------
+*/
+
+// Not perfect mapping when merged at Mtin level. 
+// Missing values within state transactions as well
+
+* To merge ReturnIds, bring the data to Mtin Taxperiod level
+use "${temp_path1}/2a2b_tin.dta", clear
+duplicates drop MReturn_ID, force
+save "${temp_path1}/2a2b_tin_temp.dta", replace
+
+use "${output_path}/unique_returnid_form16.dta", clear
+merge m:1 MReturn_ID using "${temp_path1}/2a2b_tin_temp.dta"
+
+/*
+
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                     8,915,569
+        from master                 7,533,063  (_merge==1)
+        from using                  1,382,506  (_merge==2)
+
+    matched                                 0  (_merge==3)
+    -----------------------------------------
+*/
+
+// Return IDs don't match at all. They haven't deidentified the data. 
 
 
 

@@ -166,6 +166,10 @@ label variable SellerBuyerTin "Tin of the dealer whom the current dealer sold to
 
 save "${output_path}/2a2b_monthly_2012.dta", replace
 
+
+
+
+
 ** Output sample data ** 
 
 ** New data

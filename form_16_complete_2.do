@@ -98,12 +98,12 @@ append using "${input_path3}\form16_`var'_data_noduplicates.dta"
 save "${output_path}\form16_data_consolidated.dta", replace
 
 *--------------------------------------------------------
-** Clean Form16_commodityCode 
+** Clean Form16_commodityCode //Need to save in output file
 *--------------------------------------------------------
 ** Load Form16CommodityCode 
 	/* Check for duplicates: No repeats in 1213 */ 
 
-use "${input_path3}\form16_1314_commoditycode.dta", clear
+use "${input_path3}\form16_1516_commoditycode.dta", clear
 
 duplicates tag MReturn_ID TaxPeriod ReturnType Mtin Commodity_code ///
 			Tax_rate Description_of_Goods Tax_Contribution ///
@@ -114,6 +114,26 @@ tab Repetitions
 gsort -Repetitions_5 MReturn_ID Commodity_code Tax_rate ///
 		Description_of_Goods Tax_Contribution
 		
-************************ Check the reasons for duplicates *****
 
+** Output Mtins & ReturnIDs
+	/* Output unique values from Form16 to QC with 2a2b data */ 
+
+*Unique Mtins
+use "${output_path}\form16_data_consolidated.dta", clear
+keep Mtin TaxPeriod
+duplicates drop
+save "${output_path}\unique_mtin_form16.dta", replace
+
+*Unique Returns
+use "${output_path}\form16_data_consolidated.dta", clear
+keep MReturn_ID TaxPeriod
+duplicates drop
+save "${output_path}\unique_returnid_form16.dta", replace
+
+***************** Temp *******************
+
+ "1213" "1314" "1415" "1516" "1617" 
+use "${input_path2}\form16_1314_complete.dta", clear
+bro if Mtin == "1000011"
+****************** Temp *******************
 

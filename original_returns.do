@@ -1,7 +1,7 @@
 /************************************************* 
 * Filename: 
 * Input: H:/Ashwin/dta/
-* Purpose: Extract original Return IDs
+* Purpose: Mapping old return id with new return ids
 * Output: H:/Ashwin/dta/
 * Author: Ashwin MB
 * Date: 25/09/2018

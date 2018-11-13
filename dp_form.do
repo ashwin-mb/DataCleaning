@@ -89,7 +89,7 @@ replace CancellationYear = regexs(0) ///
 
 keep Mtin OriginalRegistrationDate RegistrationDate RegistrationStatus CancellationYear 
 
-save "${output_path}/mtin_list.dta", replace // Contains 92 missing TIN values
+save "${output_path}/unique_mtin_dp.dta", replace // Contains 92 missing TIN values
 
 
 
