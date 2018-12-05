@@ -97,6 +97,18 @@ append using "${input_path3}\form16_`var'_data_noduplicates.dta"
 
 save "${output_path}\form16_data_consolidated.dta", replace
 
+* Rename TaxPeriod
+
+use "${output_path}\form16_data_consolidated.dta", clear
+
+replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Third quaterly-2012"
+replace TaxPeriod = "Second Quarter-2012" if TaxPeriod == "Second quaterly-2012"
+replace TaxPeriod = "First Quarter-2012" if TaxPeriod == "First quaterly-2012"
+replace TaxPeriod = "Fourth Quarter-2012" if TaxPeriod == "Forth Quarter-2012"
+replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Thrid Quater-2012"
+
+save "${output_path}\form16_data_consolidated.dta", replace
+
 *--------------------------------------------------------
 ** Clean Form16_commodityCode //Need to save in output file
 *--------------------------------------------------------
@@ -130,10 +142,5 @@ keep MReturn_ID TaxPeriod
 duplicates drop
 save "${output_path}\unique_returnid_form16.dta", replace
 
-***************** Temp *******************
 
- "1213" "1314" "1415" "1516" "1617" 
-use "${input_path2}\form16_1314_complete.dta", clear
-bro if Mtin == "1000011"
-****************** Temp *******************
 

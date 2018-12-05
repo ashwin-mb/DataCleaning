@@ -22,11 +22,14 @@ set mem 100m
 *--------------------------------------------------------
 
 *input files*
-global input_path "H:/Ashwin/dta/final"
+global input_path1 "H:/Ashwin/dta/original"
 global input_path2 "H:/Ashwin/dta/intermediate"
+global input_path3 "H:/Ashwin/dta/intermediate2"
 
 *output files*
-
+global output_path "H:/Ashwin/dta/final"
+global qc_path "H:/Ashwin/dta/qc"
+global prob_path "H:/Ashwin/dta/prob"
 
 *--------------------------------------------------------
 ** Combine Form 16 TDS data for every year
@@ -50,19 +53,15 @@ save "${input_path}/form16_tds_consolidated.dta", replace
 *--------------------------------------------------------
 ** Merge tds consolidated with returnid-taxperiod table
 	/* Inserting tax quarter information with tds details */
-use "${input_path}/form16_tds_consolidated.dta", clear
+use "${output_path}/form16_tds_consolidated.dta", clear
 
 merge m:1 MReturn_ID using ///
 	"${input_path}/returnid_taxperiod_consolidated.dta"
 
 keep if _merge==3
 drop _merge
+rename Tax_Period TaxPeriod
+save "${output_path}/form16_tds_consolidated.dta", replace
 
-save "${input_path}/form16_tds_consolidated.dta", replace
 
-*****Tempt*****
-use "${input_path2}/form16_1415_tds.dta", clear
-keep if Mtin == "1779386"
-
-****TEmpt*****
 

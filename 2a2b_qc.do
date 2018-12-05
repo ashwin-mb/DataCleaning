@@ -5,7 +5,7 @@
 * Output:
 * Author: Ashwin MB
 * Date: 09/10/2018
-* Last modified: 09/10/2018 (Ashwin)
+* Last modified: 19/11/2018 (Ashwin)
 ****************************************************/
  
 ** Initializing environment
@@ -264,49 +264,17 @@ save "${temp_path1}/2a2b_tin.dta", replace
 
 ** Compare Mtin & Return_Ids from 2a2b and Tin
 * Load Tin values from 2a2b
-use "${temp_path1}/2a2b_tin.dta", clear
+use "${temp_path1}/2a2b_tin.dta", clear //2a2b at Mtin-TaxPeriod-ReturnID level
 
 *rename TaxPeriod for merging
 rename OriginalTaxPeriod TaxPeriod
 label variable TaxPeriod "OriginalTaxPeriod"
 
-replace TaxPeriod = "First Quarter-2013" if TaxPeriod == "First Quarter 2013"
-replace TaxPeriod = "First Quarter-2014" if TaxPeriod == "First Quarter 2014"
-replace TaxPeriod = "First Quarter-2015" if TaxPeriod == "First Quarter 2015"
-
-replace TaxPeriod = "Second Quarter-2013" if TaxPeriod == "Second Quarter 2013"
-replace TaxPeriod = "Second Quarter-2014" if TaxPeriod == "Second Quarter 2014"
-replace TaxPeriod = "Second Quarter-2015" if TaxPeriod == "Second Quarter 2015"
-
-replace TaxPeriod = "Third Quarter-2013" if TaxPeriod == "Third Quarter 2013"
-replace TaxPeriod = "Third Quarter-2014" if TaxPeriod == "Third Quarter 2014"
-replace TaxPeriod = "Third Quarter-2015" if TaxPeriod == "Third Quarter 2015"
-
-replace TaxPeriod = "Fourth Quarter-2013" if TaxPeriod == "Fourth Quarter 2013"
-replace TaxPeriod = "Fourth Quarter-2014" if TaxPeriod == "Fourth Quarter 2014"
-replace TaxPeriod = "Fourth Quarter-2015" if TaxPeriod == "Fourth Quarter 2015"
-
-replace TaxPeriod = "Jan-2012" if TaxPeriod == "jan 2012"
-replace TaxPeriod = "Feb-2012" if TaxPeriod == "feb 2012"
-replace TaxPeriod = "Mar-2012" if TaxPeriod == "mar 2012"
-replace TaxPeriod = "Apr-2012" if TaxPeriod == "apr 2012"
-replace TaxPeriod = "May-2012" if TaxPeriod == "may 2012"
-replace TaxPeriod = "Jun-2012" if TaxPeriod == "jun 2012"
-replace TaxPeriod = "Jul-2012" if TaxPeriod == "jul 2012"
-replace TaxPeriod = "Aug-2012" if TaxPeriod == "aug 2012"
-replace TaxPeriod = "Sep-2012" if TaxPeriod == "sep 2012"
-replace TaxPeriod = "Oct-2012" if TaxPeriod == "oct 2012"
-replace TaxPeriod = "Nov-2012" if TaxPeriod == "nov 2012"
-replace TaxPeriod = "Dec-2012" if TaxPeriod == "dec 2012"
-replace TaxPeriod = "Jan-2013" if TaxPeriod == "jan 2013"
-replace TaxPeriod = "Feb-2013" if TaxPeriod == "feb 2013"
-replace TaxPeriod = "Mar-2013" if TaxPeriod == "mar 2013"
-
-save "${temp_path1}/2a2b_tin.dta", replace
+save "${temp_path1}/2a2b_tin.dta", replace //2a2b at Mtin-TaxPeriod-ReturnID level
 
 * To merge Mtins, bring the data to Mtin Taxperiod level
 duplicates drop Mtin TaxPeriod, force
-save "${temp_path1}/2a2b_tin_temp.dta", replace 
+save "${temp_path1}/2a2b_tin_temp.dta", replace //2a2b at Mtin-TaxPeriod level
 
 use "${output_path}/unique_mtin_form16.dta", clear
 merge 1:1 Mtin TaxPeriod using "${temp_path1}/2a2b_tin_temp.dta"
@@ -324,16 +292,17 @@ merge 1:1 Mtin TaxPeriod using "${temp_path1}/2a2b_tin_temp.dta"
 */
 // Not perfect mapping when merged at Mtin-TaxPeriod
 
-* Merge at only Mtin level
+* Create unique Mtins from 2a2b  data
 use "${temp_path1}/2a2b_tin.dta", clear
 duplicates drop Mtin, force
 save "${temp_path1}/2a2b_tin_temp.dta", replace
+
+* Merge at Mtin level
 
 use "${output_path}/unique_mtin_form16.dta", clear
 merge m:1 Mtin using "${temp_path1}/2a2b_tin_temp.dta"
 
 /*
-
     Result                           # of obs.
     -----------------------------------------
     not matched                       455,183
@@ -346,11 +315,27 @@ merge m:1 Mtin using "${temp_path1}/2a2b_tin_temp.dta"
 
 // Not perfect mapping when merged at Mtin level. 
 // Missing values within state transactions as well
+keep if _merge == 2 
+keep Mtin
+save "${output_path}/2a2b_mtins_only.dta", replace
 
-* To merge ReturnIds, bring the data to Mtin Taxperiod level
+** Understand Types of dealers that are present only in 2a2b
+	/* Merge mtins from 2a2b (that are not present in form16) with DP */
+
+use "${output_path}/2a2b_mtins_only.dta", clear 
+tempfile temp1
+save `temp1'
+
+use "${output_path}/dp_form.dta", clear
+merge m:1 Mtin using `temp1'
+
+keep if _merge == 3 // retaing only merged data; total firms = 10,808
+tab OptComposition // 98.65 (8.3k) are composition, 115 firms regular, others cancelled
+
+** Merge ReturnIds, bring the data to Mtin Taxperiod level
 use "${temp_path1}/2a2b_tin.dta", clear
 duplicates drop MReturn_ID, force
-save "${temp_path1}/2a2b_tin_temp.dta", replace
+save "${temp_path1}/2a2b_tin_temp.dta", replace // 2a2b data at Mtin-Period level
 
 use "${output_path}/unique_returnid_form16.dta", clear
 merge m:1 MReturn_ID using "${temp_path1}/2a2b_tin_temp.dta"
@@ -369,7 +354,263 @@ merge m:1 MReturn_ID using "${temp_path1}/2a2b_tin_temp.dta"
 
 // Return IDs don't match at all. They haven't deidentified the data. 
 
+** Merge Mtins from 2a2b and DP
+	/* Check dealer from 2a2b are present in DP forms */
+use "${temp_path1}/2a2b_tin.dta", clear 
+duplicates drop Mtin, force
+save "${temp_path1}/2a2b_tin_temp.dta", replace // 2a2b data at Mtin level
+
+use "${output_path}/unique_mtin_dp.dta", clear
+merge m:1 Mtin using "${temp_path1}/2a2b_tin_temp.dta"
+
+/*
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       355,048
+        from master                   355,048  (_merge==1)
+        from using                          0  (_merge==2)
+
+    matched                           331,517  (_merge==3)
+    -----------------------------------------
+*/
+
+// Mtins from 2a2b and DP perfectly match
 
 
 
+*--------------------------------------------------------
+** 5.1 Aggregating 2a2b and Form16 at firm level for 2014-15
+*--------------------------------------------------------
+**** Aggregating 2a2b and Form16 data at firm level **** 
+foreach var in 2013 2015 {
+use "${output_path}/2a2b_quarterly_`var'.dta", clear
+gen Combination = SaleOrPurchase + SalePurchaseType
+//tab Combination
+drop if Combination == "Swank-Jodhpur" | Combination == `"""'
+bysort Mtin Combination TaxPeriod: egen NetAmount_1 = sum(NetAmount)
+bysort Mtin Combination TaxPeriod: egen Tax_1 = sum(Tax)
+bysort Mtin Combination TaxPeriod: egen Total_1 = sum(Total)
+tostring TaxPeriod, replace
+gen Unique_identifier = Mtin + TaxPeriod
+duplicates drop Unique_identifier Combination, force
 
+drop Sale* DealerG* TransactionT* Rate NetAmount Tax Total TaxYear Date var12 ///
+	Form_Status var14 SellerBuyerTin MReturn_ID OriginalTaxPeriod Commodity* 
+drop if Combination == "'" | Combination == "(41)" | Combination == "(64)" ///
+	| Combination == "(77)" | Combination == "+" | Combination == "88" ///
+	| Combination == "]" 
+	
+reshape wide NetAmount_1 Tax_1 Total_1, i(Unique_identifier) j(Combination) string
+
+label variable NetAmount_1AECG "NetAmount = R6.1(PurchaseCapitalGoods)"
+label variable Tax_1AEOT "Tax = R6.2(CreditOtherGoods)" 
+label variable NetAmount_1ANISPC "NetAmount = R11.15(InterStatePurchaseCD)" 
+label variable NetAmount_1ANISPN "NetAmount = R11.15(TotalInterStatePurchase)"
+label variable NetAmount_1ANPUC "NetAmount = R6.3(PurchaseUnregisteredDealer)"
+label variable NetAmount_1ANSBT "NetAmount = R11.3(InwardStockTransferBranchF)"
+label variable NetAmount_1BFEOI "NetAmount = R11.10(ExportFromIndia"
+label variable NetAmount_1BFHSS "NetAmount = R11.12(HighSeaSale)"
+label variable NetAmount_1BFISBCT "NetAmount = R11.4(OutwardStockTransferBranch"
+label variable NetAmount_1BFISS "NetAmount = R11.15(TotalInterStateSale)"
+label variable Tax_1BFLS "Tax = R5.14(TotalOutputTax)"
+
+order (Mtin TaxPeriod), before(Unique_identifier)
+replace TaxPeriod = "First Quarter-`var'" if TaxPeriod == "41"
+replace TaxPeriod = "Second Quarter-`var'" if TaxPeriod == "42"
+replace TaxPeriod = "Third Quarter-`var'" if TaxPeriod == "43"
+replace TaxPeriod = "Fourth Quarter-`var'" if TaxPeriod == "44"
+tempfile temp1
+save "`temp1'" 
+
+use "${output_path}\form16_data_consolidated.dta", clear
+keep if TaxPeriod == "First Quarter-`var'" | TaxPeriod == "Second Quarter-`var'" ///
+| TaxPeriod == "Third Quarter-`var'" | TaxPeriod == "Fourth Quarter-`var'"
+gsort Mtin TaxPeriod -DateofReturnFiled
+duplicates drop Mtin TaxPeriod, force
+
+merge 1:1 Mtin TaxPeriod using `temp1'
+
+/* 2013-14
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       179,380
+        from master                   148,965  (_merge==1)
+        from using                     30,415  (_merge==2)
+
+    matched                           821,567  (_merge==3)
+    -----------------------------------------
+*/
+
+/* 2014-15
+Master = Form16; Using = 2a2b
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       197,098
+        from master                   165,823  (_merge==1)
+        from using                     31,275  (_merge==2)
+
+    matched                           844,944  (_merge==3)
+    -----------------------------------------
+*/
+
+/* 2015-16
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       241,995
+        from master                   211,146  (_merge==1)
+        from using                     30,849  (_merge==2)
+
+    matched                           896,993  (_merge==3)
+    -----------------------------------------
+*/
+save "${input_path2}\2a2b_form16_`var'.dta", replace
+}
+
+** 5.1.a Merged data from 2a2b and Form 16 for 2014-15
+foreach var in 2013 2014 2015{
+use "${input_path2}\2a2b_form16_`var'.dta", clear
+keep if _merge == 3 			
+keep TaxPeriod Mtin ///
+	PurchaseCapitalGoods CreditOtherGoods InterStatePurchaseOther ///
+	PurchaseUnregisteredDealer InwardStockTransferBranchF ExportFromIndia ///
+	HighSeaSale  TotalInterStateSale TotalOutputTax InterStatePurchaseCD ///
+	HighSeaPurchase InwardStockTransferConsignment ///
+	NetAmount_1AECG Tax_1AEOT NetAmount_1ANISPC NetAmount_1ANISPN ///
+	NetAmount_1ANPUC NetAmount_1ANSBT NetAmount_1BFEOI NetAmount_1BFISBCT ///
+	NetAmount_1BFISS Tax_1BFLS  NetAmount_1ANHSP OutwardStockTransferBranchF ///
+	NetAmount_1ANIOI NetAmount_1BFHSS ImportToIndia NetAmount_1ANSCT
+
+/* Mapping between 2a2b & Form 16 
+TotalOutputTax 					Tax_1BFLS
+PurchaseCapitalGoods 			NetAmount_1AECG
+CreditOtherGoods				Tax_1AEOT
+PurchaseUnregisteredDealer		NetAmount_1ANPUC
+InwardStockTransferBranchF		NetAmount_1ANSBT
+ExportFromIndia					NetAmount_1BFEOI
+ImportToIndia					Tax_1AEOT
+OutwardStockTransferBranchF 	NetAmount_1BFISBCT
+HighSeaSale						NetAmount_1BFHSS
+HighSeaPurchase					NetAmount_1ANHSP
+TotalInterStateSale				NetAmount_1BFISS
+TotalInterStatePurchase			NetAmount_1ANISPN
+InterStatePurchaseCD			NetAmount_1ANISPC
+InwardStockTransferConsignment	NetAmount_1ANSCT
+*/
+
+gen r5_14_error = ((TotalOutputTax - Tax_1BFLS)*100)/Tax_1BFLS
+//gen r6_1_error = ((PurchaseCapitalGoods - NetAmount_1AECG)*100)/NetAmount_1AECG
+gen r6_2_error = ((CreditOtherGoods - Tax_1AEOT)*100)/Tax_1AEOT
+//gen r11_10p_error = ((ImportToIndia - NetAmount_1ANIOI)*100)/NetAmount_1ANIOI
+//gen r11_3p_error = ((InwardStockTransferBranchF - NetAmount_1ANSBT)*100)/NetAmount_1ANSBT
+//gen r11_4_error = ((InwardStockTransferConsignment - NetAmount_1ANSCT)*100)/NetAmount_1ANSCT
+//gen r11_3s_error = ((OutwardStockTransferBranchF - NetAmount_1BFISBCT)*100)/NetAmount_1BFISBCT 
+//gen r11_10s_error = ((ExportFromIndia - NetAmount_1BFEOI)*100)/NetAmount_1BFEOI
+//gen r11_12p_error = ((HighSeaPurchase - NetAmount_1ANHSP)*100)/NetAmount_1ANHSP
+//gen r11_12s_error = ((HighSeaSale - NetAmount_1BFHSS)*100)/NetAmount_1BFHSS
+gen r11_15s_error = ((TotalInterStateSale - NetAmount_1BFISS)*100)/NetAmount_1BFISS
+gen r11_1_error = ((InterStatePurchaseCD - NetAmount_1ANISPC)*100)/NetAmount_1ANISPC
+//gen r11_13p_error = ((InterStatePurchaseOther - NetAmount_1ANISPN)*100)/NetAmount_1ANISPN
+//gen r6_3_1_error = ((PurchaseUnregisteredDealer - NetAmount_1ANPUC)*100)/NetAmount_1ANPUC
+
+
+label variable r5_14_error "TotalOutputTax" 
+//label variable r6_1_error "PurchaseCapitalGoods" 
+label variable r6_2_error "CreditOtherGoods" 
+//label variable r11_10p_error "ImportToIndia" 
+//label variable r11_3p_error "InwardStockTransferBranchF"
+//label variable r11_4_error "InwardStockTransferConsignment" 
+//label variable r11_3s_error "OutwardStockTransferBranchF" 
+//label variable r11_10s_error "ExportFromIndia"
+//label variable r11_12p_error "HighSeaPurchase"
+//label variable r11_12s_error "HighSeaSale"
+label variable r11_15s_error "TotalInterStateSale" 
+label variable r11_1_error "InterStatePurchaseCD"
+//label variable r11_13p_error "InterStatePurchaseOther" 
+//label variable r6_3_1_error "PurchaseUnregisteredDealer"
+
+save "${input_path3}\2a2b_form16_`var'_2.dta", replace
+}
+**Deep dive on the reasons for high Error Rate
+
+foreach var1 in 2013 2014 2015 { 
+use "${input_path3}\2a2b_form16_`var1'_2.dta", clear
+
+foreach var in r5_14 r6_2 r11_15s r11_1 {
+gen `var'_error_flag = 0 
+replace `var'_error_flag = 1 if r5_14_error > -5 & r5_14_error < 5
+replace `var'_error_flag = 2 if r5_14_error < -5 | r5_14_error > 5
+replace `var'_error_flag = 0 if  r5_14_error == . 
+tab `var'_error_flag 
+}
+}
+/*  All 4 variables show same error rates
+	0=Missing; 1=Between -5 & 5; 2=more than -5 & 5
+				2013-14
+r5_14_error |
+      _flag |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |    150,762       18.35       18.35
+          1 |    662,745       80.67       99.02
+          2 |      8,060        0.98      100.00
+------------+-----------------------------------
+      Total |    821,567      100.00
+
+				2014-15
+r5_14_error |
+      _flag |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |    159,444       18.87       18.87
+          1 |    676,879       80.11       98.98
+          2 |      8,621        1.02      100.00
+------------+-----------------------------------
+      Total |    844,944      100.00
+
+				2015-16
+r5_14_error |
+      _flag |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |    172,755       19.26       19.26
+          1 |    714,394       79.64       98.90
+          2 |      9,844        1.10      100.00
+------------+-----------------------------------
+      Total |    896,993      100.00
+
+*/
+
+
+** Not merged = Only from Form 16 
+	/* Understand the type of firms that are in Form 16 but not in 2a2b */
+
+foreach var in 2013 2014 2015 {
+use "${input_path2}\2a2b_form16_`var'.dta", clear
+
+keep if _merge == 1
+tab GrossTurnover // Average 99.5 firms have 0 Gross-turnover
+}
+** Not merged = Only from 2a2b
+	/* Understand the type of firms that are in 2a2b but not in Form16 */
+
+** Check how many are composition dealers
+foreach var in 2013 2014 2015 {
+use "${input_path2}\2a2b_form16_`var'.dta", clear
+keep if _merge == 2 	
+keep Mtin
+duplicates drop
+tempfile temp1
+save `temp1'
+	
+* Merge 2a2b unmerged data with dp
+use "${output_path}\dp_form.dta", clear
+merge m:1 Mtin using `temp1'
+tab OptComposition if _merge == 3 // Average 91% are Composition dealers
+
+/*
+    Result                           # of obs.
+    -----------------------------------------
+    not matched                       676,705
+        from master                   676,705  (_merge==1)
+        from using                          0  (_merge==2)
+
+    matched                             9,860  (_merge==3)
+*/
+}

@@ -28,11 +28,13 @@ global input_path1 "H:/Ashwin/dta/original"
 global input_path2 "H:/Ashwin/dta/intermediate"
 global input_path3 "H:/Ashwin/dta/intermediate2"
 global temp_path1 "H:/Ashwin/dta/temp"
+global old_path "D:/data"
 
 *output files*
 global output_path "H:/Ashwin/dta/final"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
+global sample_path "H:/Ashwin/dta/sample"
 
 *--------------------------------------------------------
 ** Cleaning variables
@@ -79,6 +81,24 @@ label variable PurchaseWise "Interstate Commodities by Purchase"
 
 save "${output_path}/dp_form.dta", replace
 
+** Rename Cancellation Date to proper format
+	/* Most CancellationDate rows are in xxxx-xx-xx format. Making other 
+	format data into same */
+use "${output_path}/dp_form.dta", clear
+
+replace CancellationDate = "2015-09-11" if Mtin == "1094567"
+replace CancellationDate = "2015-09-07" if Mtin == "1460562"
+replace CancellationDate = "2015-10-12" if Mtin == "1810197"
+replace CancellationDate = "2015-07-31" if Mtin == "1434711"
+replace CancellationDate = "2015-07-14" if Mtin == "1532286"
+replace CancellationDate = "2015-01-18" if Mtin == "1647832"
+replace CancellationDate = "2015-01-18" if Mtin == "1694222"
+replace CancellationDate = "2015-08-16" if Mtin == "1267792"
+replace CancellationDate = "2015-08-06" if Mtin == "1300742"
+replace CancellationDate = "2015-08-03" if Mtin == "1056028"
+
+save "${output_path}/dp_form.dta", replace
+
 ************** Create list of unique TIN numbers **********
 * Create list of unique TIN number and their status, year of cancellation
 use "${output_path}/dp_form.dta", clear
@@ -90,6 +110,5 @@ replace CancellationYear = regexs(0) ///
 keep Mtin OriginalRegistrationDate RegistrationDate RegistrationStatus CancellationYear 
 
 save "${output_path}/unique_mtin_dp.dta", replace // Contains 92 missing TIN values
-
 
 
