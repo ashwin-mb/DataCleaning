@@ -1,7 +1,7 @@
 /************************************************* 
 * Filename: 
 * Input: H:/Ashwin/dta/DP_forms.dta
-* Purpose: Creates features for bogus firms from DP
+* Purpose: Creates features for bogus firms from form16
 		   These are input for the ML tool 
 * Output: 
 			

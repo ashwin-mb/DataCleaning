@@ -17,21 +17,7 @@ qui cap log c
 set mem 100m
 
 *--------------------------------------------------------
-** 1. Flow of the code 
-** 2. Setting directories and files
-** 3. Naming TaxPeriods
-** 4. Sum of Summary stats
-** 5. Finding Ratios
-** 6.a Total Purchases, PercValueAdded
-** 6.b TotalReturnCount
-** 7. Bogus flags
-** 8. Bogus more details
-** 9. Registered/ unregistered values
-** 10. UntaxProp
-*--------------------------------------------------------
-
-*--------------------------------------------------------
-** 1. Setting directories and files
+** Setting directories and files
 *--------------------------------------------------------
 
 *input files*
@@ -41,24 +27,22 @@ global input_path3 "H:/Ashwin/dta/intermediate2"
 global temp_path1 "H:/Ashwin/dta/temp"
 
 *output files*
+global features_path "H:/Ashwin/dta/BogusDealers"
 global output_path "H:/Ashwin/dta/final"
 global analysis_path "H:/Ashwin/dta/analysis"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
 
 *--------------------------------------------------------
-** 2. Naming TaxPeriods
+** Naming TaxPeriods
 *--------------------------------------------------------
 
-use "${output_path}/form16_latestreturns_consolidated.dta", clear
-
-replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Third quaterly-2012"
-replace TaxPeriod = "Second Quarter-2012" if TaxPeriod == "Second quaterly-2012"
-replace TaxPeriod = "First Quarter-2012" if TaxPeriod == "First quaterly-2012"
-replace TaxPeriod = "Fourth Quarter-2012" if TaxPeriod == "Forth Quarter-2012"
-replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Thrid Quater-2012"
+use "${output_path}/form16_data_consolidated", clear
 
 drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"|TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"
+
+//drop Tin T312203 T312202 Frequency T312020 T312021 DealerName DealerAddress DealerTelephone T312028 T312029 T312043 T312044 T312051 T312052 T312057 T312082 T312083 AccountNumber AccountType MICR BankDetails T312092 T312093 T312137 T312138 T312139 T312140 T312141 T312142 T312152 T312153 T312154 T312155 T312156 T312157 T312158 T312159 T312160 T312161 T312162 T312163 T312164 T312165 T312166 T312167
+//drop T312104 T312105 T312106 T312107 T312108 T312109 T312110 T312111 T312112 T312113 T312114 T312115 T312116 T312117 T312118 T312119 T312120 T312121 T312122 T312123 T312124 T312125 T312126 T312127 T312128 T312129 T312130 T312131 T312132 T312133 T312134 Name Designation Place Date TDSString Receipt2A2B T312170 T312DF5 T312DF6 T312DF7 T312DF8 T312178 Signatory
 
 gen TaxYear=0
 replace TaxYear=1 if TaxPeriod=="Annual-2010"
@@ -76,7 +60,6 @@ replace TaxHalfyear=6 if TaxPeriod=="Second halfyearly-2012"
 replace TaxYear=1 if TaxPeriod=="First halfyearly-2010"|TaxPeriod=="Second halfyearly-2010"
 replace TaxYear=2 if TaxPeriod=="First halfyearly-2011"|TaxPeriod=="Second halfyearly-2011"
 replace TaxYear=3 if TaxPeriod=="First halfyearly-2012"|TaxPeriod=="Second halfyearly-2012"
-
 
 gen TaxQuarter=0
 replace TaxQuarter=1 if TaxPeriod=="First Quarter-2010"
@@ -107,7 +90,6 @@ replace TaxQuarter=25 if TaxPeriod=="First Quarter-2016"
 replace TaxQuarter=26 if TaxPeriod=="Second Quarter-2016"
 replace TaxQuarter=27 if TaxPeriod=="Third Quarter-2016"
 replace TaxQuarter=28 if TaxPeriod=="Fourth Quarter-2016"
-
 
 replace TaxYear=1 if TaxQuarter>0&TaxQuarter<=4
 replace TaxYear=2 if TaxQuarter>4&TaxQuarter<=8
@@ -188,13 +170,6 @@ label define quarter 1 "Q1, 2010-11" 2 "Q2, 2010-11" 3 "Q3, 2010-11" 4 "Q4, 2010
 
 label values TaxQuarter quarter
 label values TaxYear year	
-
-gsort Mtin TaxYear TaxHalfyear TaxQuarter TaxMonth
-
-*--------------------------------------------------------
-** 6.a Total Purchases, PercValueAdded
-*--------------------------------------------------------
-
 gen MoneyDeposited=max(AggregateAmountPaid, AmountDepositedByDealer)
 gen TotalPurchases=PurchaseCapitalGoods+PurchaseOtherGoods+PurchaseUnregisteredDealer
 gen PercValueAdded=(GrossTurnover-TotalPurchases)/(TotalPurchases)
@@ -217,7 +192,6 @@ by Mtin: replace SemiAnnualDummy=SemiAnnualDummy[_n-1] if SemiAnnualDummy>=.
 by Mtin: replace QuarterlyDummy=QuarterlyDummy[_n-1] if QuarterlyDummy>=.
 by Mtin: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 
-
 drop if AnnualDummy==1&SemiAnnualDummy==1&TaxYear==1
 drop if AnnualDummy==1&QuarterlyDummy==1&TaxYear==1
 drop if AnnualDummy==1&MonthlyDummy==1&TaxYear==1
@@ -225,7 +199,6 @@ drop if SemiAnnualDummy==1&QuarterlyDummy==1&TaxYear==1
 drop if SemiAnnualDummy==1&MonthlyDummy==1&TaxYear==1
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==1
 drop AnnualDummy SemiAnnualDummy MonthlyDummy QuarterlyDummy
-
 
 gsort Mtin TaxYear TaxHalfyear TaxQuarter TaxMonth
 gen AnnualDummy=1 if TaxPeriod=="Annual-2011"
@@ -250,166 +223,30 @@ gsort Mtin TaxYear TaxHalfyear TaxQuarter TaxMonth
 gen QuarterlyDummy=1 if TaxPeriod=="First Quarter-2012"|TaxPeriod=="Second Quarter-2012"|TaxPeriod=="Third Quarter-2012"|TaxPeriod=="Fourth Quarter-2012"
 gen MonthlyDummy=1 if TaxPeriod=="Apr-2012"|TaxPeriod=="Aug-2012"|TaxPeriod=="Dec-2012"|TaxPeriod=="Feb-2013"|TaxPeriod=="Jan-2013"|TaxPeriod=="Jul-2012"|TaxPeriod=="Jun-2012"|TaxPeriod=="Mar-2013"|TaxPeriod=="May-2012"|TaxPeriod=="Nov-2012"|TaxPeriod=="Oct-2012"|TaxPeriod=="Sep-2012"
 
-
 by Mtin: replace QuarterlyDummy=QuarterlyDummy[_n-1] if QuarterlyDummy>=.
 by Mtin: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
-//drop if TaxQuarter==0
-//collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
+destring MReturn_ID, replace 
+gen RefundClaimedBoolean = 0
+replace RefundClaimedBoolean = 1 if RefundClaimed >0
 
-*--------------------------------------------------------
-** 4. Sum of Summary stats
-*--------------------------------------------------------
+gsort Mtin TaxPeriod -MReturn_ID
+by Mtin TaxPeriod: gen ReturnCount=_n
+by Mtin TaxPeriod: gen TotalReturnCount=_N
 
-collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward ///
-	CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited ///
-	GrossTurnover CentralTurnover LocalTurnover TotalOutputTax ///
-	PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales ///
-	TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, ///
-	by(Mtin TaxQuarter)
-
-*--------------------------------------------------------
-** 5. Ratio
-*--------------------------------------------------------
-
-gen ZeroTurnover=0
-replace ZeroTurnover=1 if GrossTurnover==0
-
-gen PositiveContribution=0
-replace PositiveContribution=1 if MoneyDeposited>0
-
-gen AllCentral=0
-replace AllCentral=1 if GrossTurnover==CentralTurnover&GrossTurnover!=0
-
-gen AllLocal=0
-replace AllLocal=1 if CentralTurnover==0&GrossTurnover!=0
-
-gen ZeroTax=(ExemptedSales==LocalTurnover)&LocalTurnover!=0
-gen VatRatio=MoneyDeposited/GrossTurnover
-gen CreditRatio=TaxCreditBeforeAdjustment/GrossTurnover
-gen TaxRatio=OutputTaxBeforeAdjustment/GrossTurnover
-gen InterstateRatio=CentralTurnover/GrossTurnover
-gen LocalVatRatio=MoneyDeposited/LocalTurnover
-gen LocalCreditRatio=TaxCreditBeforeAdjustment/LocalTurnover
-gen LocalTaxRatio=OutputTaxBeforeAdjustment/LocalTurnover
-
-/*xtile group1=MoneyDeposited if TaxQuarter==1 , nq(100) 
-xtile group2=MoneyDeposited if TaxQuarter==2 , nq(100)  
-xtile group3=MoneyDeposited if TaxQuarter==3 , nq(100)  
-xtile group4=MoneyDeposited if TaxQuarter==4 , nq(100) 
-xtile group5=MoneyDeposited if TaxQuarter==5 , nq(100)  
-xtile group6=MoneyDeposited if TaxQuarter==6 , nq(100)  
-xtile group7=MoneyDeposited if TaxQuarter==7 , nq(100)  
-xtile group8=MoneyDeposited if TaxQuarter==8 , nq(100) */ 
-xtile group9=MoneyDeposited if TaxQuarter==9 , nq(100) 
-xtile group10=MoneyDeposited if TaxQuarter==10 , nq(100) 
-xtile group11=MoneyDeposited if TaxQuarter==11 , nq(100) 
-xtile group12=MoneyDeposited if TaxQuarter==12 , nq(100) 
-xtile group13=MoneyDeposited if TaxQuarter==13 , nq(100) 
-xtile group14=MoneyDeposited if TaxQuarter==14 , nq(100) 
-xtile group15=MoneyDeposited if TaxQuarter==15 , nq(100) 
-xtile group16=MoneyDeposited if TaxQuarter==16 , nq(100) 
-xtile group17=MoneyDeposited if TaxQuarter==17 , nq(100) 
-xtile group18=MoneyDeposited if TaxQuarter==18 , nq(100) 
-xtile group19=MoneyDeposited if TaxQuarter==19 , nq(100) 
-xtile group20=MoneyDeposited if TaxQuarter==20 , nq(100) 
-xtile group21=MoneyDeposited if TaxQuarter==21 , nq(100) 
-xtile group22=MoneyDeposited if TaxQuarter==22 , nq(100) 
-xtile group23=MoneyDeposited if TaxQuarter==23 , nq(100) 
-xtile group24=MoneyDeposited if TaxQuarter==24 , nq(100) 
-xtile group25=MoneyDeposited if TaxQuarter==25 , nq(100) 
-xtile group26=MoneyDeposited if TaxQuarter==26 , nq(100) 
-xtile group27=MoneyDeposited if TaxQuarter==27 , nq(100) 
-xtile group28=MoneyDeposited if TaxQuarter==28 , nq(100) 
-
-gen MoneyGroup=group1
-replace MoneyGroup=group2 if MoneyGroup==.
-replace MoneyGroup=group3 if MoneyGroup==.
-replace MoneyGroup=group4 if MoneyGroup==.
-replace MoneyGroup=group5 if MoneyGroup==.
-replace MoneyGroup=group6 if MoneyGroup==.
-replace MoneyGroup=group7 if MoneyGroup==.
-replace MoneyGroup=group8 if MoneyGroup==.
-replace MoneyGroup=group9 if MoneyGroup==.
-replace MoneyGroup=group10 if MoneyGroup==.
-replace MoneyGroup=group11 if MoneyGroup==.
-replace MoneyGroup=group12 if MoneyGroup==.
-replace MoneyGroup=group13 if MoneyGroup==.
-replace MoneyGroup=group14 if MoneyGroup==.
-replace MoneyGroup=group15 if MoneyGroup==.
-replace MoneyGroup=group16 if MoneyGroup==.
-replace MoneyGroup=group17 if MoneyGroup==.
-replace MoneyGroup=group18 if MoneyGroup==.
-replace MoneyGroup=group19 if MoneyGroup==.
-replace MoneyGroup=group20 if MoneyGroup==.
-replace MoneyGroup=group21 if MoneyGroup==.
-replace MoneyGroup=group22 if MoneyGroup==.
-replace MoneyGroup=group23 if MoneyGroup==.
-replace MoneyGroup=group24 if MoneyGroup==.
-replace MoneyGroup=group25 if MoneyGroup==.
-replace MoneyGroup=group26 if MoneyGroup==.
-replace MoneyGroup=group27 if MoneyGroup==.
-replace MoneyGroup=group28 if MoneyGroup==.
-drop group*
-
-*merge 1:1 Mtin TaxQuarter using "${features_path}/form16_v5.dta", keepusing(TotalReturnCount TotalPurchases PercValueAdded TotalValueAdded PercPurchaseUnregisteredDealer)
-gen ZeroTaxCredit=0
-replace ZeroTaxCredit=1 if TaxCreditBeforeAdjustment==0
+keep if ReturnCount==1
+drop ReturnCount
 drop if Mtin == ""
-isid Mtin TaxQuarter
-save "${features_path}/FeatureReturns_new.dta", replace
+save "${features_path}/form16_v5.dta", replace
 
-*Add mean return count
-use "${features_path}/form16_v5.dta", clear
-bysort Mtin TaxQuarter: egen MeanReturnCount = mean(TotalReturnCount)
-bysort Mtin TaxQuarter: gen Count=_n
-keep if Count==1
-replace TotalReturnCount=MeanReturnCount
-keep Mtin TaxQuarter TotalReturnCount TotalPurchases PercValueAdded ///
-	PercPurchaseUnregisteredDealer TotalValueAdded
-isid Mtin TaxQuarter
-save "${features_path}/form16_v5_ReturnCount.dta", replace
 
-use "${features_path}/FeatureReturns_new.dta", clear
-merge 1:1 Mtin TaxQuarter using "${features_path}/form16_v5_ReturnCount.dta", keepusing(TotalReturnCount TotalPurchases PercValueAdded PercPurchaseUnregisteredDealer TotalValueAdded)
-save "${features_path}/FeatureReturns_new.dta", replace
 
-* Merging bogus dealers information
-use "${features_path}/FeatureReturns_new.dta", clear
-drop _merge
-destring Mtin, replace
-merge m:1 Mtin using "${output_path}\bogus_consolidated.dta"
-gen bogus_flag = 0 
-replace bogus_flag = 1 if _merge == 3 
-drop if _merge == 2 
-drop Reason inspection_year _merge
-save "${features_path}/FeatureReturns_new_v2.dta", replace
 
-*Merge with status of bogus firms
-use "${output_path}/dp_form.dta", clear
-keep Mtin RegistrationStatus
-drop if Mtin == ""
-tempfile temp3
-save temp3, replace
 
-use "${features_path}/FeatureReturns_new_v2.dta", clear
-tostring Mtin, replace
-merge m:1 Mtin using temp3
-drop if _merge==2
-drop _merge
-save "${features_path}/FeatureReturns_new_v3.dta", replace
 
-use "${features_path}/FeatureReturns_new_v3.dta", clear
-merge 1:1 Mtin TaxQuarter using "${features_path}/RegisteredSales_AllQuarters.dta"
-drop if _merge==2
 
-gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
-replace UnTaxProp=0 if UnTaxProp==.
 
-save "${features_path}/FeatureReturns.dta", replace
 
-****use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta"
-****merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
-****merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
-****save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturnsWithDS.dta"
+
+
