@@ -409,7 +409,7 @@ replace UnTaxProp=0 if UnTaxProp==.
 
 save "${features_path}/FeatureReturns.dta", replace
 
-****use "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturns.dta"
-****merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
-****merge 1:1 DealerTIN TaxQuarter using "E:\data\PreliminaryAnalysis\BogusDealers\FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
-****save "E:\data\PreliminaryAnalysis\BogusDealers\FeatureReturnsWithDS.dta"
+use "${features_path}/FeatureReturns.dta"
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
+save "${features_path}/FeatureReturnsWithDS.dta", replace

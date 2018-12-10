@@ -29,14 +29,14 @@ global temp_path1 "H:/Ashwin/dta/temp"
 global old_path "D:/data"
 
 *output files*
-global features_path "H:/Ashwin/dta/BogusDealers"
+global features_path "H:/Ashwin/dta/bogusdealers"
 global output_path "H:/Ashwin/dta/final"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
 global sample_path "H:/Ashwin/dta/sample"
 
 *--------------------------------------------------------
-** Cleaning variables
+** Monthly 2a2b Sale form
 *--------------------------------------------------------
 *use "E:\data\annexure_2A2B_monthly_201213.dta", clear
 use "${output_path}/2a2b_monthly_2012.dta", clear
@@ -179,6 +179,10 @@ rename Count TotalCountSaleTransactions
 
 save "${features_path}\SalesTaxAmount2012.dta", replace
 
+
+*--------------------------------------------------------
+** Monthly 2a2b Purchase form
+*--------------------------------------------------------
 
 *use "E:\data\annexure_2A2B_monthly_201213.dta", clear
 use "${output_path}/2a2b_monthly_2012.dta", clear
@@ -343,27 +347,27 @@ keep if Count2==1
 isid TaxQuarter Mtin SellerBuyerTin 
 
 drop PurchaseTaxAmount TotalPurchaseAmount TotalCount Count2 TaxMonth TaxPeriod
-
+drop SaleOrPurchase Rate MReturn_ID 
 rename TotalTaxAmount PurchaseTaxAmount
 rename SumTotalAmount TotalPurchaseAmount
 rename Count TotalCountPurchaseTransactions
 
-save "${features_path}\PurchaseTaxAmount2012.dta", replace
-
-
-
-
-
-
-
+save "${features_path}\PurchaseTaxAmount_2012.dta", replace
 
 *--------------------------------------------------------
-** Quarterly level data 2a2b
+** Quarterly 2a2b Sale form for 2013, 2014, 2015, 2016
 *--------------------------------------------------------
-cd "E:\data"
 
-use "annexure_2A2B_quarterly_2013.dta", clear
-use "annexure_2A2B_quarterly_2014.dta", clear
+foreach var1 in 2015 2016{
+foreach var2 in q1 q2 q3 q4{
+
+use "${output_path}/2a2b_`var1'_`var2'.dta", clear
+
+
+//use "annexure_2A2B_quarterly_2013.dta", clear
+//use "annexure_2A2B_quarterly_2014.dta", clear
+*use "${output_path}/2a2b_quarterly_2013.dta", clear
+*use "${output_path}/2a2b_quarterly_2014.dta", clear
 
 keep if SaleOrPurchase=="BF"
 keep if SalePurchaseType=="LS"
@@ -381,6 +385,7 @@ replace DealerGoodType="OT" if DealerGoodType=="OT  "
 
 replace DealerGoodType="UD" if DealerGoodType=="uD"
 replace DealerGoodType="UD" if DealerGoodType=="ud"
+tab DealerGoodType
 
 replace TransactionType=trim(TransactionType)
 replace TransactionType="GD" if TransactionType=="GD "
@@ -394,7 +399,7 @@ replace TransactionType="GD" if TransactionType=="gd "
 
 replace TransactionType="WC" if TransactionType=="wc"
 replace TransactionType="WC" if TransactionType=="Wc"
-
+tab TransactionType
 
 replace TransactionType=trim(TransactionType)
 keep if DealerGoodType=="RD"
@@ -418,10 +423,14 @@ replace Rate="5" if Rate=="5.000"
 replace Rate="5" if Rate=="05.00"
 replace Rate="5" if Rate=="4.99"
 replace Rate="4" if Rate=="4.00"
+tab Rate
 
-drop T985DF5 T985DF6 T985DF7 T985DF8 FormsStatus T985DF4
-
+drop if Mtin ==""
 drop if SellerBuyerTin==""
+
+rename NetAmount Amount
+rename Tax TaxAmount
+rename Total TotalAmount
 
 bys TaxPeriod Mtin SellerBuyerTin: gen TotalCount=_N
 by TaxPeriod Mtin SellerBuyerTin: egen TotalTaxAmount= sum(TaxAmount)
@@ -431,44 +440,90 @@ by TaxPeriod Mtin SellerBuyerTin: egen SumTotalAmount= sum(TotalAmount)
 keep if Count==1
 
 isid TaxPeriod Mtin SellerBuyerTin 
-drop TransactionType DealerGoodType SalePurchaseType  Count T985DF3 T985DF2 T985DF1 AEBoolean TaxRate Date ReceiptId DateTime Year DealerName TotalAmount TaxAmount Month Amount Rate SaleOrPurchase
+drop TransactionType DealerGoodType SalePurchaseType CommodityName CommodityCode ///
+ Count Rate Date MReturn_ID SaleOrPurchase var12 var14 Form_Status
 
 rename TotalTaxAmount SalesTaxAmount
 rename SumTotalAmount TotalSalesAmount
 rename TotalCount TotalCountSaleTransactions
 
-gen TaxQuarter=13 if TaxPeriod=="t9854113"
-replace TaxQuarter=14 if TaxPeriod=="t9854213"
-replace TaxQuarter=15 if TaxPeriod=="t9854313"
-replace TaxQuarter=16 if TaxPeriod=="t9854413"
-replace TaxQuarter=17 if TaxPeriod=="t9854114"
-replace TaxQuarter=18 if TaxPeriod=="t9854214"
-replace TaxQuarter=19 if TaxPeriod=="t9854314"
-replace TaxQuarter=20 if TaxPeriod=="t9854414"
+gen TaxQuarter =0
+replace TaxQuarter=13 if OriginalTaxPeriod=="First Quarter-2013"
+replace TaxQuarter=14 if OriginalTaxPeriod=="Second Quarter-2013"
+replace TaxQuarter=15 if OriginalTaxPeriod=="Third Quarter-2013"
+replace TaxQuarter=16 if OriginalTaxPeriod=="Fourth Quarter-2013"
+replace TaxQuarter=17 if OriginalTaxPeriod=="First Quarter-2014"
+replace TaxQuarter=18 if OriginalTaxPeriod=="Second Quarter-2014"
+replace TaxQuarter=19 if OriginalTaxPeriod=="Third Quarter-2014"
+replace TaxQuarter=20 if OriginalTaxPeriod=="Fourth Quarter-2014"
+replace TaxQuarter=21 if OriginalTaxPeriod=="First Quarter-2015"
+replace TaxQuarter=22 if OriginalTaxPeriod=="Second Quarter-2015"
+replace TaxQuarter=23 if OriginalTaxPeriod=="Third Quarter-2015"
+replace TaxQuarter=24 if OriginalTaxPeriod=="Fourth Quarter-2015"
+replace TaxQuarter=25 if OriginalTaxPeriod=="First Quarter-2016"
+replace TaxQuarter=26 if OriginalTaxPeriod=="Second Quarter-2016"
+replace TaxQuarter=27 if OriginalTaxPeriod=="Third Quarter-2016"
+replace TaxQuarter=28 if OriginalTaxPeriod=="Fourth Quarter-2016"
+tab TaxQuarter
 
-drop TaxPeriod Quarter
+drop TaxPeriod OriginalTaxPeriod
+
+//save "${features_path}\SalesTaxAmount2013.dta", replace
+//save "${features_path}\SalesTaxAmount2014.dta", replace
+save "${features_path}\SalesTaxAmount_`var1'_`var2'.dta", replace
+}
+}
 
 
-save "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount2013.dta", replace
-save "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount2014.dta", replace
+use "${features_path}/SalesTaxAmount_2012.dta", clear
+append using "${features_path}/SalesTaxAmount_2013.dta"
+append using "${features_path}/SalesTaxAmount_2014.dta"
+append using "${features_path}/SalesTaxAmount_2015_q1.dta"
+append using "${features_path}/SalesTaxAmount_2015_q2.dta"
+append using "${features_path}/SalesTaxAmount_2015_q3.dta"
+append using "${features_path}/SalesTaxAmount_2015_q4.dta"
+append using "${features_path}/SalesTaxAmount_2016_q1.dta"
+append using "${features_path}/SalesTaxAmount_2016_q2.dta"
+append using "${features_path}/SalesTaxAmount_2016_q3.dta"
+append using "${features_path}/SalesTaxAmount_2016_q4.dta"
 
-append using "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount2014.dta"
-append using "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount2012.dta"
+save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
 
-save "E:\data\PreliminaryAnalysis\BogusDealers\SalesTaxAmount20121314.dta", replace
+*Dropping unnecessary variables 
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+drop Amount TaxAmount TotalAmount TaxYear
+save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
 
+*Dropping repetitions from the dataset 
+duplicates tag TaxQuarter Mtin SellerBuyerTin, gen(repeat1)
 
-/**************************
-//Purchased From
-***************************/
-use "annexure_2A2B_quarterly_2013.dta", clear
-use "annexure_2A2B_quarterly_2014.dta", clear
+/*
+    repeat1 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 | 28,120,759      100.00      100.00
+          1 |          2        0.00      100.00
+------------+-----------------------------------
+      Total | 28,120,761      100.00
+*/
 
+drop if repeat1 == 1 
+drop repeat1
+save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
+
+*--------------------------------------------------------
+** Quarterly 2a2b Purchase form
+*--------------------------------------------------------
+
+foreach var1 in 2015 2016{
+foreach var2 in q1 q2 q3 q4{
+
+use "${output_path}/2a2b_`var1'_`var2'.dta", clear
+
+*use "${output_path}/2a2b_quarterly_2013.dta", clear
+*use "${output_path}/2a2b_quarterly_2014.dta", clear
 
 keep if SaleOrPurchase=="AE"
-
 keep if SalePurchaseType=="CG"|SalePurchaseType=="OT"|DealerGoodType=="CG"|DealerGoodType=="OT"
-drop T985DF5 T985DF6 T985DF7 T985DF8 FormsStatus T985DF4
 
 replace TransactionType=trim(TransactionType)
 replace TransactionType="GD" if TransactionType=="GD "
@@ -483,6 +538,7 @@ replace TransactionType="GD" if TransactionType=="gD"
 
 replace TransactionType="WC" if TransactionType=="wc"
 replace TransactionType="WC" if TransactionType=="Wc"
+tab TransactionType
 
 replace Rate=trim(Rate)
 replace Rate="0" if Rate=="0.0"
@@ -499,12 +555,18 @@ replace Rate="20" if Rate=="20.0"
 replace Rate="5" if Rate=="5.0"
 replace Rate="5" if Rate=="5.00"
 replace Rate="5" if Rate=="5.000"
+replace Rate="5" if Rate=="5.0000"
 replace Rate="5" if Rate=="05.00"
 replace Rate="4" if Rate=="4.00"
+tab Rate
 
 drop if Rate=="13.13"|Rate=="14"
 drop if SellerBuyerTin==""
+drop if Mtin ==""
 
+rename NetAmount Amount
+rename Tax TaxAmount
+rename Total TotalAmount
 
 bys TaxPeriod Mtin SellerBuyerTin:gen TransActionCount=_N
 *by TaxPeriod Mtin SellerBuyerTin:egen SumAmount=sum(Amount)
@@ -515,28 +577,57 @@ by TaxPeriod Mtin SellerBuyerTin:gen Count2=_n
 keep if Count2==1
 
 isid TaxPeriod Mtin SellerBuyerTin 
-drop TransactionType DealerGoodType SalePurchaseType Count2 T985DF3 T985DF2 T985DF1 AEBoolean TaxRate Date ReceiptId DateTime Year DealerName TotalAmount TaxAmount Month Amount
+drop TransactionType DealerGoodType SalePurchaseType Count2 Date var12 var14  TaxYear CommodityName CommodityCode TotalAmount TaxAmount Amount Form_Status 
 
 rename TotalTaxAmount PurchaseTaxAmount
 rename SumTotalAmount TotalPurchaseAmount
 rename TransActionCount TotalCountPurchaseTransactions
 
-gen TaxQuarter=13 if TaxPeriod=="t9854113"
-replace TaxQuarter=14 if TaxPeriod=="t9854213"
-replace TaxQuarter=15 if TaxPeriod=="t9854313"
-replace TaxQuarter=16 if TaxPeriod=="t9854413"
-replace TaxQuarter=17 if TaxPeriod=="t9854114"
-replace TaxQuarter=18 if TaxPeriod=="t9854214"
-replace TaxQuarter=19 if TaxPeriod=="t9854314"
-replace TaxQuarter=20 if TaxPeriod=="t9854414"
+gen TaxQuarter =0
+replace TaxQuarter=13 if OriginalTaxPeriod=="First Quarter-2013"
+replace TaxQuarter=14 if OriginalTaxPeriod=="Second Quarter-2013"
+replace TaxQuarter=15 if OriginalTaxPeriod=="Third Quarter-2013"
+replace TaxQuarter=16 if OriginalTaxPeriod=="Fourth Quarter-2013"
+replace TaxQuarter=17 if OriginalTaxPeriod=="First Quarter-2014"
+replace TaxQuarter=18 if OriginalTaxPeriod=="Second Quarter-2014"
+replace TaxQuarter=19 if OriginalTaxPeriod=="Third Quarter-2014"
+replace TaxQuarter=20 if OriginalTaxPeriod=="Fourth Quarter-2014"
+replace TaxQuarter=21 if OriginalTaxPeriod=="First Quarter-2015"
+replace TaxQuarter=22 if OriginalTaxPeriod=="Second Quarter-2015"
+replace TaxQuarter=23 if OriginalTaxPeriod=="Third Quarter-2015"
+replace TaxQuarter=24 if OriginalTaxPeriod=="Fourth Quarter-2015"
+replace TaxQuarter=25 if OriginalTaxPeriod=="First Quarter-2016"
+replace TaxQuarter=26 if OriginalTaxPeriod=="Second Quarter-2016"
+replace TaxQuarter=27 if OriginalTaxPeriod=="Third Quarter-2016"
+replace TaxQuarter=28 if OriginalTaxPeriod=="Fourth Quarter-2016"
+tab TaxQuarter
 
 drop TaxPeriod Rate SaleOrPurchase
-drop Quarter
-save "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount2013.dta", replace
-save "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount2014.dta", replace
+drop MReturn_ID OriginalTaxPeriod
 
-append using "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount2013.dta"
-append using "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount2012.dta"
+*save "${features_path}\PurchaseTaxAmount_2013.dta", replace
+*save "${features_path}\PurchaseTaxAmount_2014.dta", replace
+
+save "${features_path}\PurchaseTaxAmount_`var1'_`var2'.dta", replace
+}
+}
+
+use "${features_path}/PurchaseTaxAmount_2012.dta", clear
+append using "${features_path}/PurchaseTaxAmount_2013.dta"
+append using "${features_path}/PurchaseTaxAmount_2014.dta"
+append using "${features_path}/PurchaseTaxAmount_2015_q1.dta"
+append using "${features_path}/PurchaseTaxAmount_2015_q2.dta"
+append using "${features_path}/PurchaseTaxAmount_2015_q3.dta"
+append using "${features_path}/PurchaseTaxAmount_2015_q4.dta"
+append using "${features_path}/PurchaseTaxAmount_2016_q1.dta"
+append using "${features_path}/PurchaseTaxAmount_2016_q2.dta"
+append using "${features_path}/PurchaseTaxAmount_2016_q3.dta"
+append using "${features_path}/PurchaseTaxAmount_2016_q4.dta"
+
+save "${features_path}/PurchaseTaxAmount_AllQuarters.dta", replace
 
 
-save "E:\data\PreliminaryAnalysis\BogusDealers\PurchaseTaxAmount20121314.dta", replace
+
+
+
+
