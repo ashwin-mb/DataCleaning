@@ -223,5 +223,10 @@ DummyRetail |
 
 */
 
-
-
+* Cleaning Ward information
+use "${features_path}\FeatureDealerProfiles.dta", clear
+//gen Ward_Number = Ward
+gen Ward_Number=regexs(2) if (regexm(Ward, "([a-zA-Z]+)[ ]*([0-9]+)"))
+destring Ward_Number, replace
+tab Ward_Number
+save "${features_path}\FeatureDealerProfiles.dta", replace

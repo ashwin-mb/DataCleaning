@@ -40,10 +40,12 @@ global sample_path "H:/Ashwin/dta/sample"
 *--------------------------------------------------------
 *use "E:\data\annexure_2A2B_monthly_201213.dta", clear
 use "${output_path}/2a2b_monthly_2012.dta", clear
-
+tab SaleOrPurchase
 keep if SaleOrPurchase=="BF"
+tab SalePurchaseType
 keep if SalePurchaseType=="LS"|SalePurchaseType==""
 
+replace DealerGoodType="OT" if DealerGoodType==" OT"
 replace DealerGoodType="OT" if DealerGoodType==" OT"
 replace DealerGoodType="OT" if DealerGoodType=="OT             "
 replace DealerGoodType="OT" if DealerGoodType=="OT     "
@@ -53,9 +55,20 @@ replace DealerGoodType="OT" if DealerGoodType=="Ot"
 replace DealerGoodType="OT" if DealerGoodType=="ot"
 replace DealerGoodType="OT" if DealerGoodType=="ot "
 replace DealerGoodType="OT" if DealerGoodType=="OT  "
-
+replace DealerGoodType="OT" if DealerGoodType=="OTHERS"
 replace DealerGoodType="UD" if DealerGoodType=="uD"
 replace DealerGoodType="UD" if DealerGoodType=="ud"
+replace DealerGoodType="UD" if DealerGoodType=="UNREGISTER DEA"
+replace DealerGoodType="UD" if DealerGoodType=="UNREGISTERED D"
+replace DealerGoodType="UD" if DealerGoodType=="UNREGISTERED"
+replace DealerGoodType="UD" if DealerGoodType=="Unregistered Dea"
+replace DealerGoodType="UD" if DealerGoodType=="Unregistered De"
+replace DealerGoodType="UD" if DealerGoodType=="Unregister Dea"
+replace DealerGoodType="UD" if DealerGoodType=="Unregisterd De"
+replace DealerGoodType="UD" if DealerGoodType=="unregistered d"
+replace DealerGoodType="UD" if DealerGoodType=="Unregistered D"
+replace DealerGoodType="UD" if DealerGoodType=="Unregistered d"
+tab DealerGoodType
 
 replace TransactionType="GD" if TransactionType=="GD "
 replace TransactionType="GD" if TransactionType=="GD  "
@@ -66,9 +79,9 @@ replace TransactionType="GD" if TransactionType=="Gd"
 replace TransactionType="GD" if TransactionType=="gd"
 replace TransactionType="GD" if TransactionType=="gd "
 replace TransactionType="GD" if TransactionType==" GD"
-
 replace TransactionType="WC" if TransactionType=="wc"
 replace TransactionType="WC" if TransactionType=="Wc"
+tab TransactionType
 
 replace TransactionType=trim(TransactionType)
 replace DealerGoodType=trim(DealerGoodType)
@@ -109,6 +122,8 @@ replace Rate="4" if Rate=="0.04"
 replace Rate="10" if Rate=="0.10"
 replace Rate="10" if Rate=="10.00"
 replace Rate="12.5" if Rate=="0.12"
+replace Rate="13.5" if Rate=="13.50"
+tab Rate
 
 drop if Rate=="3.00"
 drop if Rate=="2.50"
@@ -177,7 +192,7 @@ rename TotalTaxAmount SalesTaxAmount
 rename SumTotalAmount TotalSalesAmount
 rename Count TotalCountSaleTransactions
 
-save "${features_path}\SalesTaxAmount2012.dta", replace
+save "${features_path}\SalesTaxAmount_2012.dta", replace
 
 
 *--------------------------------------------------------
@@ -189,7 +204,6 @@ use "${output_path}/2a2b_monthly_2012.dta", clear
 keep if SaleOrPurchase=="AE"
 replace SalePurchaseType="OT" if SalePurchaseType=="ot"
 keep if SalePurchaseType=="CG"|SalePurchaseType=="OT"|SalePurchaseType==""
-
 keep if DealerGoodType==""|DealerGoodType=="OT"|DealerGoodType=="CG"
 
 drop if SellerBuyerTin==""
@@ -211,6 +225,7 @@ replace Rate="12.5" if Rate=="12.500"
 replace Rate="12.5" if Rate=="12.5000"
 replace Rate="12.5" if Rate=="125.00"
 replace Rate="12.5" if Rate==".12"
+replace Rate="20" if Rate=="0.20"
 replace Rate="20" if Rate=="20.00"
 replace Rate="20" if Rate=="20.0"
 replace Rate="5" if Rate=="0.05"
@@ -226,6 +241,7 @@ replace Rate="4" if Rate=="0.04"
 replace Rate="10" if Rate=="0.10"
 replace Rate="10" if Rate=="10.00"
 replace Rate="12.5" if Rate=="0.12"
+tab Rate
 
 gen dRate=Rate
 destring dRate, replace
@@ -284,9 +300,9 @@ replace TransactionType="GD" if TransactionType=="Gd"
 replace TransactionType="GD" if TransactionType=="gd"
 replace TransactionType="GD" if TransactionType=="gd "
 replace TransactionType="GD" if TransactionType==" GD"
-
 replace TransactionType="WC" if TransactionType=="wc"
 replace TransactionType="WC" if TransactionType=="Wc"
+tab TransactionType
 
 ***** temp ******
 save "${temp_path1}/networkfeatures_2a2b.dta", replace
@@ -355,14 +371,10 @@ rename Count TotalCountPurchaseTransactions
 save "${features_path}\PurchaseTaxAmount_2012.dta", replace
 
 *--------------------------------------------------------
-** Quarterly 2a2b Sale form for 2013, 2014, 2015, 2016
+** Quarterly 2a2b Sale form for 2013, 2014,
 *--------------------------------------------------------
 
-foreach var1 in 2015 2016{
-foreach var2 in q1 q2 q3 q4{
-
-use "${output_path}/2a2b_`var1'_`var2'.dta", clear
-
+use "${output_path}/2a2b_quarterly_2014.dta", clear
 
 //use "annexure_2A2B_quarterly_2013.dta", clear
 //use "annexure_2A2B_quarterly_2014.dta", clear
@@ -382,7 +394,6 @@ replace DealerGoodType="OT" if DealerGoodType=="Ot"
 replace DealerGoodType="OT" if DealerGoodType=="ot"
 replace DealerGoodType="OT" if DealerGoodType=="ot "
 replace DealerGoodType="OT" if DealerGoodType=="OT  "
-
 replace DealerGoodType="UD" if DealerGoodType=="uD"
 replace DealerGoodType="UD" if DealerGoodType=="ud"
 tab DealerGoodType
@@ -396,7 +407,6 @@ replace TransactionType="GD" if TransactionType=="GD             "
 replace TransactionType="GD" if TransactionType=="Gd"
 replace TransactionType="GD" if TransactionType=="gd"
 replace TransactionType="GD" if TransactionType=="gd "
-
 replace TransactionType="WC" if TransactionType=="wc"
 replace TransactionType="WC" if TransactionType=="Wc"
 tab TransactionType
@@ -470,11 +480,159 @@ drop TaxPeriod OriginalTaxPeriod
 
 //save "${features_path}\SalesTaxAmount2013.dta", replace
 //save "${features_path}\SalesTaxAmount2014.dta", replace
+save "${features_path}\SalesTaxAmount_2014.dta", replace
+
+*--------------------------------------------------------
+** Quarterly 2a2b Sale form for 2015, 2016
+*--------------------------------------------------------
+
+foreach var1 in 2015 2016{
+foreach var2 in q1 q2 q3 q4{
+
+use "${output_path}/2a2b_`var1'_`var2'.dta", clear
+
+
+//use "annexure_2A2B_quarterly_2013.dta", clear
+//use "annexure_2A2B_quarterly_2014.dta", clear
+*use "${output_path}/2a2b_quarterly_2013.dta", clear
+*use "${output_path}/2a2b_quarterly_2014.dta", clear
+
+keep if SaleOrPurchase=="BF"
+keep if SalePurchaseType=="LS"
+
+
+replace DealerGoodType="OT" if DealerGoodType==" OT"
+replace DealerGoodType="OT" if DealerGoodType=="OT             "
+replace DealerGoodType="OT" if DealerGoodType=="OT     "
+replace DealerGoodType="OT" if DealerGoodType=="OT "
+replace DealerGoodType="OT" if DealerGoodType=="OT  "
+replace DealerGoodType="OT" if DealerGoodType=="Ot"
+replace DealerGoodType="OT" if DealerGoodType=="ot"
+replace DealerGoodType="OT" if DealerGoodType=="ot "
+replace DealerGoodType="OT" if DealerGoodType=="OT  "
+
+replace DealerGoodType="UD" if DealerGoodType=="uD"
+replace DealerGoodType="UD" if DealerGoodType=="ud"
+tab DealerGoodType
+
+replace TransactionType=trim(TransactionType)
+replace TransactionType="GD" if TransactionType=="GD "
+replace TransactionType="GD" if TransactionType=="GD  "
+replace TransactionType="GD" if TransactionType=="GD    "
+replace TransactionType="GD" if TransactionType=="GD     "
+replace TransactionType="GD" if TransactionType=="GD             "
+replace TransactionType="GD" if TransactionType=="Gd"
+replace TransactionType="GD" if TransactionType=="gd"
+replace TransactionType="GD" if TransactionType=="gd "
+
+replace TransactionType="WC" if TransactionType=="wc"
+replace TransactionType="WC" if TransactionType=="Wc"
+tab TransactionType
+
+replace TransactionType=trim(TransactionType)
+keep if DealerGoodType=="RD"
+
+replace Rate=trim(Rate)
+
+replace Rate="0" if Rate=="0.0"
+replace Rate="0" if Rate=="0.00"
+replace Rate="0" if Rate=="00.00"
+replace Rate="1" if Rate=="1.00"
+replace Rate="1" if Rate=="1.000"
+replace Rate="2" if Rate=="2.00"
+replace Rate="12.5" if Rate=="12.50"
+replace Rate="12.5" if Rate=="12.500"
+replace Rate="12.5" if Rate=="12.5000"
+replace Rate="16.6" if Rate=="16.60"
+replace Rate="20" if Rate=="20.00"
+replace Rate="20" if Rate=="20.0"
+replace Rate="27" if Rate=="27.00"
+replace Rate="5" if Rate=="05"
+replace Rate="5" if Rate=="5.0"
+replace Rate="5" if Rate=="5.00"
+replace Rate="5" if Rate=="5.000"
+replace Rate="5" if Rate=="05.00"
+replace Rate="5" if Rate=="4.99"
+replace Rate="4" if Rate=="4.00"
+tab Rate
+
+/* 2015 q3
+       Rate |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     87,678        4.71        4.71
+          1 |     17,092        0.92        5.63
+       12.5 |    639,097       34.33       39.96
+       16.6 |        613        0.03       40.00
+         20 |     42,718        2.29       42.29
+         25 |        554        0.03       42.32
+          5 |  1,073,624       57.68      100.00
+------------+-----------------------------------
+      Total |  1,861,376      100.00
+*/
+/*
+       Rate |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |     91,237        4.71        4.71
+          1 |     14,189        0.73        5.44
+       12.5 |    668,224       34.48       39.92
+       16.6 |        571        0.03       39.95
+         18 |        605        0.03       39.98
+         20 |     40,397        2.08       42.07
+         25 |        521        0.03       42.10
+         27 |        528        0.03       42.12
+          5 |  1,121,565       57.88      100.00
+------------+-----------------------------------
+      Total |  1,937,837      100.00
+*/
+
+drop if Mtin ==""
+drop if SellerBuyerTin==""
+
+rename NetAmount Amount
+rename Tax TaxAmount
+rename Total TotalAmount
+
+bys TaxPeriod Mtin SellerBuyerTin: gen TotalCount=_N
+by TaxPeriod Mtin SellerBuyerTin: egen TotalTaxAmount= sum(TaxAmount)
+by TaxPeriod Mtin SellerBuyerTin: gen Count=_n
+by TaxPeriod Mtin SellerBuyerTin: egen SumTotalAmount= sum(TotalAmount)
+
+keep if Count==1
+
+isid TaxPeriod Mtin SellerBuyerTin 
+drop TransactionType DealerGoodType SalePurchaseType CommodityName CommodityCode ///
+ Count Rate Date MReturn_ID SaleOrPurchase var12 var14 Form_Status
+
+rename TotalTaxAmount SalesTaxAmount
+rename SumTotalAmount TotalSalesAmount
+rename TotalCount TotalCountSaleTransactions
+
+gen TaxQuarter =0
+replace TaxQuarter=13 if OriginalTaxPeriod=="First Quarter-2013"
+replace TaxQuarter=14 if OriginalTaxPeriod=="Second Quarter-2013"
+replace TaxQuarter=15 if OriginalTaxPeriod=="Third Quarter-2013"
+replace TaxQuarter=16 if OriginalTaxPeriod=="Fourth Quarter-2013"
+replace TaxQuarter=17 if OriginalTaxPeriod=="First Quarter-2014"
+replace TaxQuarter=18 if OriginalTaxPeriod=="Second Quarter-2014"
+replace TaxQuarter=19 if OriginalTaxPeriod=="Third Quarter-2014"
+replace TaxQuarter=20 if OriginalTaxPeriod=="Fourth Quarter-2014"
+replace TaxQuarter=21 if OriginalTaxPeriod=="First Quarter-2015"
+replace TaxQuarter=22 if OriginalTaxPeriod=="Second Quarter-2015"
+replace TaxQuarter=23 if OriginalTaxPeriod=="Third Quarter-2015"
+replace TaxQuarter=24 if OriginalTaxPeriod=="Fourth Quarter-2015"
+replace TaxQuarter=25 if OriginalTaxPeriod=="First Quarter-2016"
+replace TaxQuarter=26 if OriginalTaxPeriod=="Second Quarter-2016"
+replace TaxQuarter=27 if OriginalTaxPeriod=="Third Quarter-2016"
+replace TaxQuarter=28 if OriginalTaxPeriod=="Fourth Quarter-2016"
+tab TaxQuarter
+
+drop TaxPeriod OriginalTaxPeriod
+
+//save "${features_path}\SalesTaxAmount2013.dta", replace
+//save "${features_path}\SalesTaxAmount2014.dta", replace
 save "${features_path}\SalesTaxAmount_`var1'_`var2'.dta", replace
 }
 }
-
-
 use "${features_path}/SalesTaxAmount_2012.dta", clear
 append using "${features_path}/SalesTaxAmount_2013.dta"
 append using "${features_path}/SalesTaxAmount_2014.dta"

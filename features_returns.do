@@ -255,7 +255,45 @@ by Mtin: replace QuarterlyDummy=QuarterlyDummy[_n-1] if QuarterlyDummy>=.
 by Mtin: replace MonthlyDummy=MonthlyDummy[_n-1] if MonthlyDummy>=.
 drop if QuarterlyDummy==1&MonthlyDummy==1&TaxYear==3
 
-//drop if TaxQuarter==0
+tab TaxQuarter
+drop if TaxQuarter==0
+
+/*
+ TaxQuarter |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |         98        0.00        0.00
+Q1, 2010-11 |          1        0.00        0.00
+Q2, 2010-11 |          1        0.00        0.00
+Q3, 2010-11 |          1        0.00        0.00
+Q4, 2010-11 |          1        0.00        0.00
+Q1, 2011-12 |          3        0.00        0.00
+Q2, 2011-12 |          4        0.00        0.00
+Q3, 2011-12 |          3        0.00        0.00
+Q4, 2011-12 |          4        0.00        0.00
+Q1, 2012-13 |    238,529        4.44        4.44
+Q2, 2012-13 |    252,304        4.70        9.14
+Q3, 2012-13 |    264,263        4.92       14.05
+Q4, 2012-13 |    273,448        5.09       19.14
+Q1, 2013-14 |    240,432        4.47       23.62
+Q2, 2013-14 |    242,764        4.52       28.13
+Q3, 2013-14 |    244,945        4.56       32.69
+Q4, 2013-14 |    242,391        4.51       37.20
+Q1, 2014-15 |    245,977        4.58       41.78
+Q2, 2014-15 |    249,980        4.65       46.43
+Q3, 2014-15 |    255,419        4.75       51.19
+Q4, 2014-15 |    259,391        4.83       56.01
+Q1, 2015-16 |    265,971        4.95       60.96
+Q2, 2015-16 |    272,679        5.07       66.04
+Q3, 2015-16 |    281,227        5.23       71.27
+Q4, 2015-16 |    288,262        5.36       76.64
+Q1, 2016-17 |    296,103        5.51       82.15
+Q2, 2016-17 |    302,113        5.62       87.77
+Q3, 2016-17 |    321,470        5.98       93.75
+Q4, 2016-17 |    335,832        6.25      100.00
+------------+-----------------------------------
+      Total |  5,373,616      100.00
+*/
+
 //collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
 
 *--------------------------------------------------------
@@ -294,6 +332,9 @@ gen LocalVatRatio=MoneyDeposited/LocalTurnover
 gen LocalCreditRatio=TaxCreditBeforeAdjustment/LocalTurnover
 gen LocalTaxRatio=OutputTaxBeforeAdjustment/LocalTurnover
 
+save "${temp_path1}/temp_features_returns.dta", replace
+** Commenting first 8 quarters since there are 1-2 values in each quarter
+
 /*xtile group1=MoneyDeposited if TaxQuarter==1 , nq(100) 
 xtile group2=MoneyDeposited if TaxQuarter==2 , nq(100)  
 xtile group3=MoneyDeposited if TaxQuarter==3 , nq(100)  
@@ -323,6 +364,7 @@ xtile group26=MoneyDeposited if TaxQuarter==26 , nq(100)
 xtile group27=MoneyDeposited if TaxQuarter==27 , nq(100) 
 xtile group28=MoneyDeposited if TaxQuarter==28 , nq(100) 
 
+/*
 gen MoneyGroup=group1
 replace MoneyGroup=group2 if MoneyGroup==.
 replace MoneyGroup=group3 if MoneyGroup==.
@@ -330,8 +372,8 @@ replace MoneyGroup=group4 if MoneyGroup==.
 replace MoneyGroup=group5 if MoneyGroup==.
 replace MoneyGroup=group6 if MoneyGroup==.
 replace MoneyGroup=group7 if MoneyGroup==.
-replace MoneyGroup=group8 if MoneyGroup==.
-replace MoneyGroup=group9 if MoneyGroup==.
+replace MoneyGroup=group8 if MoneyGroup==. */
+gen MoneyGroup=group9 
 replace MoneyGroup=group10 if MoneyGroup==.
 replace MoneyGroup=group11 if MoneyGroup==.
 replace MoneyGroup=group12 if MoneyGroup==.
@@ -403,10 +445,10 @@ save "${features_path}/FeatureReturns_new_v3.dta", replace
 use "${features_path}/FeatureReturns_new_v3.dta", clear
 merge 1:1 Mtin TaxQuarter using "${features_path}/RegisteredSales_AllQuarters.dta"
 drop if _merge==2
-
 gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
 replace UnTaxProp=0 if UnTaxProp==.
-
+gen RefundClaimedBoolean = 0 
+replace RefundClaimedBoolean = 1 if RefundClaimed >0
 save "${features_path}/FeatureReturns.dta", replace
 
 use "${features_path}/FeatureReturns.dta"
