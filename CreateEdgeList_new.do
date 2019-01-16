@@ -192,8 +192,8 @@ rename TotalTaxAmount SalesTaxAmount
 rename SumTotalAmount TotalSalesAmount
 rename Count TotalCountSaleTransactions
 
-save "${features_path}\SalesTaxAmount_2012.dta", replace
-
+save "${features_path}\SalesTaxAmount_2012_new.dta", replace
+//save "${features_path}\SalesTaxAmount_2012.dta", replace
 
 *--------------------------------------------------------
 ** Monthly 2a2b Purchase form
@@ -368,7 +368,7 @@ rename TotalTaxAmount PurchaseTaxAmount
 rename SumTotalAmount TotalPurchaseAmount
 rename Count TotalCountPurchaseTransactions
 
-save "${features_path}\PurchaseTaxAmount_2012.dta", replace
+save "${features_path}\PurchaseTaxAmount_2012_new.dta", replace
 
 *--------------------------------------------------------
 ** Quarterly 2a2b Sale form for 2013, 2014,
@@ -477,10 +477,11 @@ replace TaxQuarter=28 if OriginalTaxPeriod=="Fourth Quarter-2016"
 tab TaxQuarter
 
 drop TaxPeriod OriginalTaxPeriod
+drop Amount TaxAmount TotalAmount TaxYear
 
-//save "${features_path}\SalesTaxAmount2013.dta", replace
-//save "${features_path}\SalesTaxAmount2014.dta", replace
-save "${features_path}\SalesTaxAmount_2014.dta", replace
+save "${features_path}\SalesTaxAmount_2014_new.dta", replace
+//save "${features_path}\SalesTaxAmount_2013.dta", replace
+//save "${features_path}\SalesTaxAmount_2014.dta", replace
 
 *--------------------------------------------------------
 ** Quarterly 2a2b Sale form for 2015, 2016
@@ -627,58 +628,44 @@ replace TaxQuarter=28 if OriginalTaxPeriod=="Fourth Quarter-2016"
 tab TaxQuarter
 
 drop TaxPeriod OriginalTaxPeriod
+drop Amount TaxAmount TotalAmount TaxYear // added later
 
 //save "${features_path}\SalesTaxAmount2013.dta", replace
 //save "${features_path}\SalesTaxAmount2014.dta", replace
 save "${features_path}\SalesTaxAmount_`var1'_`var2'.dta", replace
 }
 }
-use "${features_path}/SalesTaxAmount_2012.dta", clear
-append using "${features_path}/SalesTaxAmount_2013.dta"
-append using "${features_path}/SalesTaxAmount_2014.dta"
-append using "${features_path}/SalesTaxAmount_2015_q1.dta"
-append using "${features_path}/SalesTaxAmount_2015_q2.dta"
-append using "${features_path}/SalesTaxAmount_2015_q3.dta"
-append using "${features_path}/SalesTaxAmount_2015_q4.dta"
-append using "${features_path}/SalesTaxAmount_2016_q1.dta"
-append using "${features_path}/SalesTaxAmount_2016_q2.dta"
-append using "${features_path}/SalesTaxAmount_2016_q3.dta"
-append using "${features_path}/SalesTaxAmount_2016_q4.dta"
 
-save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
+use "${features_path}/SalesTaxAmount_2012_new.dta", clear
+append using "${features_path}/SalesTaxAmount_2013_new.dta"
+append using "${features_path}/SalesTaxAmount_2014_new.dta"
+append using "${features_path}/SalesTaxAmount_2015_q1_new.dta"
+append using "${features_path}/SalesTaxAmount_2015_q2_new.dta"
+append using "${features_path}/SalesTaxAmount_2015_q3_new.dta"
+append using "${features_path}/SalesTaxAmount_2015_q4_new.dta"
+append using "${features_path}/SalesTaxAmount_2016_q1_new.dta"
+append using "${features_path}/SalesTaxAmount_2016_q2_new.dta"
+append using "${features_path}/SalesTaxAmount_2016_q3_new.dta"
+append using "${features_path}/SalesTaxAmount_2016_q4_new.dta"
 
-*Dropping unnecessary variables 
-use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
-drop Amount TaxAmount TotalAmount TaxYear
-save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
+save "${features_path}/SalesTaxAmount_AllQuarters_new.dta", replace
+//save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
 
-*Dropping repetitions from the dataset 
+use "${features_path}/SalesTaxAmount_AllQuarters_new.dta", clear
 duplicates tag TaxQuarter Mtin SellerBuyerTin, gen(repeat1)
-
-/*
-    repeat1 |      Freq.     Percent        Cum.
-------------+-----------------------------------
-          0 | 28,120,759      100.00      100.00
-          1 |          2        0.00      100.00
-------------+-----------------------------------
-      Total | 28,120,761      100.00
-*/
-
-drop if repeat1 == 1 
-drop repeat1
-save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
+tab repeat1
 
 *--------------------------------------------------------
 ** Quarterly 2a2b Purchase form
 *--------------------------------------------------------
-
+/*
 foreach var1 in 2015 2016{
 foreach var2 in q1 q2 q3 q4{
 
 use "${output_path}/2a2b_`var1'_`var2'.dta", clear
-
+*/
 *use "${output_path}/2a2b_quarterly_2013.dta", clear
-*use "${output_path}/2a2b_quarterly_2014.dta", clear
+use "${output_path}/2a2b_quarterly_2014.dta", clear
 
 keep if SaleOrPurchase=="AE"
 keep if SalePurchaseType=="CG"|SalePurchaseType=="OT"|DealerGoodType=="CG"|DealerGoodType=="OT"
@@ -764,15 +751,15 @@ drop TaxPeriod Rate SaleOrPurchase
 drop MReturn_ID OriginalTaxPeriod
 
 *save "${features_path}\PurchaseTaxAmount_2013.dta", replace
-*save "${features_path}\PurchaseTaxAmount_2014.dta", replace
-
-save "${features_path}\PurchaseTaxAmount_`var1'_`var2'.dta", replace
+save "${features_path}\PurchaseTaxAmount_2014_new.dta", replace
+/*
+save "${features_path}\PurchaseTaxAmount_`var1'_`var2'_new.dta", replace
 }
 }
-
-use "${features_path}/PurchaseTaxAmount_2012.dta", clear
+*/
+use "${features_path}/PurchaseTaxAmount_2012_new.dta", clear
 append using "${features_path}/PurchaseTaxAmount_2013.dta"
-append using "${features_path}/PurchaseTaxAmount_2014.dta"
+append using "${features_path}/PurchaseTaxAmount_2014_new.dta"
 append using "${features_path}/PurchaseTaxAmount_2015_q1.dta"
 append using "${features_path}/PurchaseTaxAmount_2015_q2.dta"
 append using "${features_path}/PurchaseTaxAmount_2015_q3.dta"
@@ -782,10 +769,11 @@ append using "${features_path}/PurchaseTaxAmount_2016_q2.dta"
 append using "${features_path}/PurchaseTaxAmount_2016_q3.dta"
 append using "${features_path}/PurchaseTaxAmount_2016_q4.dta"
 
-save "${features_path}/PurchaseTaxAmount_AllQuarters.dta", replace
+save "${features_path}/PurchaseTaxAmount_AllQuarters_new.dta", replace
 
-
-
+use "${features_path}/PurchaseTaxAmount_AllQuarters_new.dta", clear
+duplicates tag TaxQuarter Mtin SellerBuyerTin, gen(repeat1)
+tab repeat1
 
 
 

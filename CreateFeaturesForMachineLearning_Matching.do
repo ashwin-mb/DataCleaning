@@ -41,14 +41,14 @@ global sample_path "H:/Ashwin/dta/sample"
 
 //Creating variables for sale and purchase discrepancies
 //Load the purchase side edge list
-use "${features_path}/PurchaseTaxAmount_AllQuarters.dta", clear
+use "${features_path}/PurchaseTaxAmount_AllQuarters_new.dta", clear
 
 //Merge the purchase side edge list with Sale side edgelist
 rename Mtin x
 rename SellerBuyerTin Mtin
 rename x SellerBuyerTin
 
-merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/SalesTaxAmount_AllQuarters.dta"
+merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/SalesTaxAmount_AllQuarters_new.dta"
 
 //For entries which do not merge, replace the missing to zeroes
 replace SalesTaxAmount=0 if SalesTaxAmount==.&_merge==1
@@ -77,7 +77,7 @@ drop SellerBuyerTin maxSalesTaxAmount absDiffTaxAmount DiffTaxAmount TotalSalesA
 replace SaleDiscrepancy=0 if SaleDiscrepancy==.
 replace absSaleDiscrepancy=0 if absSaleDiscrepancy==.
 
-save "${features_path}/SaleDiscrepancy.dta", replace
+save "${features_path}/SaleDiscrepancy_new.dta", replace
 
 //For the Purchase side
 drop if _merge==2
@@ -99,18 +99,18 @@ replace absPurchaseDiscrepancy=0 if absPurchaseDiscrepancy==.
 
 rename SellerBuyerTin Mtin
 
-save "${features_path}/PurchaseDiscrepancy.dta"
+save "${features_path}/PurchaseDiscrepancy_new.dta"
 
 *--------------------------------------------------------
 ** Calculating Discrepancy Count
 *--------------------------------------------------------
-use "${features_path}/PurchaseTaxAmount_AllQuarters.dta", clear
+use "${features_path}/PurchaseTaxAmount_AllQuarters_new.dta", clear
 
 rename Mtin x
 rename SellerBuyerTin Mtin
 rename x SellerBuyerTin
 
-merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/SalesTaxAmount_AllQuarters.dta"
+merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/SalesTaxAmount_AllQuarters_new.dta"
 
 rename Mtin x
 rename SellerBuyerTin Mtin
@@ -179,18 +179,18 @@ drop SellerBuyerTin TotalCountPurchaseTransactions PurchaseTaxAmount TotalPurcha
 replace PurchaseMyTaxDiscrepancy=0 if PurchaseMyTaxDiscrepancy==.
 replace PurchaseOtherTaxDiscrepancy=0 if PurchaseOtherTaxDiscrepancy==.
 
-save "${features_path}/PurchaseDiscrepancyCounts.dta"
+save "${features_path}/PurchaseDiscrepancyCounts_new.dta"
 
 
 //Now we repeat calculating these measures for the sales side
 
-use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+use "${features_path}/SalesTaxAmount_AllQuarters_new.dta", clear
 
 rename Mtin x
 rename SellerBuyerTin Mtin
 rename x SellerBuyerTin
 
-merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/PurchaseTaxAmount_AllQuarters.dta"
+merge 1:1 TaxQuarter Mtin SellerBuyerTin using "${features_path}/PurchaseTaxAmount_AllQuarters_new.dta"
 
 rename Mtin x
 rename SellerBuyerTin Mtin
@@ -256,7 +256,7 @@ replace SaleMyTaxDiscrepancy=0 if SaleMyTaxDiscrepancy==.
 replace SaleOtherTaxDiscrepancy=0 if SaleOtherTaxDiscrepancy==.
 
 drop SellerBuyerTin TotalCountPurchaseTransactions PurchaseTaxAmount TotalPurchaseAmount TotalCountSaleTransactions SalesTaxAmount TotalSalesAmount _merge TotalCount TotalPurchaseTaxAmount TotalSalesTaxAmount Count Count2
-save "${features_path}/SaleDiscrepancyCounts.dta"
+save "${features_path}/SaleDiscrepancyCounts_new.dta"
 
 *--------------------------------------------------------
 ** Identifying Discrepancies
@@ -265,9 +265,9 @@ save "${features_path}/SaleDiscrepancyCounts.dta"
 use "${features_path}/SaleDiscrepancyCounts.dta", clear
 merge 1:1 Mtin TaxQuarter using "${features_path}/SaleDiscrepancy.dta", generate(_merge_salediscrepancy)
 tab _merge
-save "${features_path}/SaleDiscrepancyAll.dta"
+save "${features_path}/SaleDiscrepancyAll_new.dta"
 
 use "${features_path}/PurchaseDiscrepancyCounts.dta", clear
 merge 1:1 Mtin TaxQuarter using "${features_path}/PurchaseDiscrepancy.dta", generate(_merge_purchasediscrepancy)
 tab _merge
-save "${features_path}/PurchaseDiscrepancyAll.dta"
+save "${features_path}/PurchaseDiscrepancyAll_new.dta"

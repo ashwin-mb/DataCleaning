@@ -45,6 +45,7 @@ global output_path "H:/Ashwin/dta/final"
 global analysis_path "H:/Ashwin/dta/analysis"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
+global features_path "H:/Ashwin/dta/bogusdealers"
 
 *--------------------------------------------------------
 ** 2. Naming TaxPeriods
@@ -449,9 +450,33 @@ gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
 replace UnTaxProp=0 if UnTaxProp==.
 gen RefundClaimedBoolean = 0 
 replace RefundClaimedBoolean = 1 if RefundClaimed >0
+drop if TaxQuarter <=8 // dropping all returns before the FY 2012-13
 save "${features_path}/FeatureReturns.dta", replace
 
 use "${features_path}/FeatureReturns.dta"
-merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
-merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
-save "${features_path}/FeatureReturnsWithDS.dta", replace
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales_new.dta", keep(master match) generate(salesds_merge)
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessPurchases_new.dta", keep(master match) generate(purchaseds_merge)
+save "${features_path}/FeatureReturnsWithDS_new.dta", replace
+
+******************* temp ********************
+/*Temp files created to test and run networkfeatures.py 
+code for 1 year */
+use "${features_path}/FeatureReturns.dta", clear
+keep if TaxQuarter >=17 & TaxQuarter <=20
+save "${features_path}/Temp_FeatureReturns_1415.dta", replace
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=17 & TaxQuarter <=20
+save "${features_path}/Temp_SalesTaxAmount_1415.dta", replace
+ 
+
+use "${features_path}/PurchaseTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=17 & TaxQuarter <=20
+save "${features_path}/Temp_PurchaseTaxAmount_1415.dta", replace
+ 
+
+
+
+
+
+

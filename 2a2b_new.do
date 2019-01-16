@@ -211,50 +211,37 @@ replace TaxPeriod = "Mar-2013" if TaxPeriod == "mar 2013"
 save "${output_path}/2a2b_monthly_2012.dta", replace
 
 
-** Output sample data ** 
+** Cleaning data ** 
+use "${output_path}/2a2b_quarterly_2014.dta", clear
 
-** New data
-use "${output_path}/2a2b_monthly_2012.dta", clear 
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("New_2012_monthly") sheetmodify
+tab TaxPeriod
 
-use "${output_path}/2a2b_quarterly_2013.dta", clear 
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("New_2013_quarterly") sheetmodify
-			
-use "${output_path}/2a2b_quarterly_2014.dta", clear 
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("New_2014_quarterly") sheetmodify
-			
-use "${output_path}/2a2b_quarterly_2015.dta", clear 
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("New_2015_quarterly") sheetmodify
+/*
 
-** Old data
-use "${old_path}/annexure_2A2B_monthly_201213.dta", clear
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("Old_2012_monthly") sheetmodify
+  TaxPeriod |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          1 |          2        0.00        0.00
+          5 |          9        0.00        0.00
+          9 |         60        0.00        0.00
+         41 |  6,033,869       24.73       24.73
+         42 |  6,159,508       25.25       49.98
+         43 |  6,071,148       24.89       74.87
+         44 |  6,131,654       25.13      100.00
+------------+-----------------------------------
+      Total | 24,396,250      100.00
+*/
 
-use "${old_path}/annexure_2A2B_quarterly_2013.dta", clear
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("Old_2013_quarterly") sheetmodify
-			
-use "${old_path}/annexure_2A2B_quarterly_2014.dta", clear
-gen number = _n
-keep if number <10000 
-export excel "${sample_path}/sample2a2b.xlsx", ///
-			firstrow(variables) she("Old_2014_quarterly") sheetmodify
+drop if TaxPeriod == 1 | TaxPeriod == 5 | TaxPeriod == 9
+tab TaxYear
 
+/*    TaxYear |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2013 |         99        0.00        0.00
+       2014 | 24,396,080      100.00      100.00
+------------+-----------------------------------
+      Total | 24,396,179      100.00
+*/
+
+drop if TaxYear!=2014
+save "${output_path}/2a2b_quarterly_2014.dta", replace
 
