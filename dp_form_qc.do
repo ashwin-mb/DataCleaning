@@ -210,5 +210,14 @@ use "${comparison_path}/dp_variables_old.dta", clear
 drop format vallab
 export excel  "${comparison_path}/dp_variables.xlsx", 
 
+************** 6. Understand cancellation reasons ***************
+use "${output_path}/dp_form.dta", clear
+destring Mtin, replace
+merge 1:1 Mtin using "${output_path}/bogus_consolidated.dta"
+
+
+
+
+
 
 

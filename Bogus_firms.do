@@ -51,3 +51,10 @@ append using "${input_path}\bogus_`var'.dta"
 rename Masked_TIN Mtin	
 rename year inspection_year	
 save "${output_path}/bogus_consolidated.dta", replace
+
+
+
+
+
+
+

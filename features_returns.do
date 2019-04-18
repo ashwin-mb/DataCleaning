@@ -59,7 +59,9 @@ replace TaxPeriod = "First Quarter-2012" if TaxPeriod == "First quaterly-2012"
 replace TaxPeriod = "Fourth Quarter-2012" if TaxPeriod == "Forth Quarter-2012"
 replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Thrid Quater-2012"
 
-drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"|TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"
+drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"| ///
+	TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"|TaxPeriod=="First halfyearly-2012"| ///
+	TaxPeriod=="Second halfyearly-2012"
 
 gen TaxYear=0
 replace TaxYear=1 if TaxPeriod=="Annual-2010"
@@ -262,37 +264,29 @@ drop if TaxQuarter==0
 /*
  TaxQuarter |      Freq.     Percent        Cum.
 ------------+-----------------------------------
-          0 |         98        0.00        0.00
-Q1, 2010-11 |          1        0.00        0.00
-Q2, 2010-11 |          1        0.00        0.00
-Q3, 2010-11 |          1        0.00        0.00
-Q4, 2010-11 |          1        0.00        0.00
-Q1, 2011-12 |          3        0.00        0.00
-Q2, 2011-12 |          4        0.00        0.00
-Q3, 2011-12 |          3        0.00        0.00
-Q4, 2011-12 |          4        0.00        0.00
-Q1, 2012-13 |    238,529        4.44        4.44
-Q2, 2012-13 |    252,304        4.70        9.14
-Q3, 2012-13 |    264,263        4.92       14.05
-Q4, 2012-13 |    273,448        5.09       19.14
-Q1, 2013-14 |    240,432        4.47       23.62
-Q2, 2013-14 |    242,764        4.52       28.13
-Q3, 2013-14 |    244,945        4.56       32.69
-Q4, 2013-14 |    242,391        4.51       37.20
-Q1, 2014-15 |    245,977        4.58       41.78
-Q2, 2014-15 |    249,980        4.65       46.43
-Q3, 2014-15 |    255,419        4.75       51.19
+Q1, 2012-13 |    238,528        4.44        4.44
+Q2, 2012-13 |    252,303        4.70        9.13
+Q3, 2012-13 |    264,262        4.92       14.05
+Q4, 2012-13 |    273,447        5.09       19.14
+Q1, 2013-14 |    240,431        4.47       23.62
+Q2, 2013-14 |    242,763        4.52       28.13
+Q3, 2013-14 |    244,944        4.56       32.69
+Q4, 2013-14 |    242,390        4.51       37.20
+Q1, 2014-15 |    245,976        4.58       41.78
+Q2, 2014-15 |    249,979        4.65       46.43
+Q3, 2014-15 |    255,418        4.75       51.19
 Q4, 2014-15 |    259,391        4.83       56.01
 Q1, 2015-16 |    265,971        4.95       60.96
 Q2, 2015-16 |    272,679        5.07       66.04
 Q3, 2015-16 |    281,227        5.23       71.27
-Q4, 2015-16 |    288,262        5.36       76.64
+Q4, 2015-16 |    288,262        5.36       76.63
 Q1, 2016-17 |    296,103        5.51       82.15
 Q2, 2016-17 |    302,113        5.62       87.77
 Q3, 2016-17 |    321,470        5.98       93.75
 Q4, 2016-17 |    335,832        6.25      100.00
 ------------+-----------------------------------
-      Total |  5,373,616      100.00
+      Total |  5,373,489      100.00
+
 */
 
 //collapse (sum) RefundClaimed TDSCertificates NetTax BalanceBroughtForward CarryForwardTaxCredit BalanceCarriedNextTaxPeriod MoneyDeposited TurnoverGross TurnoverCentral TurnoverLocal TotalOutputTax PurchaseUnregisteredDealer TotalTaxCredit ExemptedSales TaxCreditBeforeAdjustment OutputTaxBeforeAdjustment, by(DealerTIN TaxYear)
@@ -401,7 +395,7 @@ gen ZeroTaxCredit=0
 replace ZeroTaxCredit=1 if TaxCreditBeforeAdjustment==0
 drop if Mtin == ""
 isid Mtin TaxQuarter
-save "${features_path}/FeatureReturns_new.dta", replace
+save "${features_path}/FeatureReturns.dta", replace
 
 *Add mean return count
 use "${features_path}/form16_v5.dta", clear
@@ -414,12 +408,12 @@ keep Mtin TaxQuarter TotalReturnCount TotalPurchases PercValueAdded ///
 isid Mtin TaxQuarter
 save "${features_path}/form16_v5_ReturnCount.dta", replace
 
-use "${features_path}/FeatureReturns_new.dta", clear
+use "${features_path}/FeatureReturns.dta", clear
 merge 1:1 Mtin TaxQuarter using "${features_path}/form16_v5_ReturnCount.dta", keepusing(TotalReturnCount TotalPurchases PercValueAdded PercPurchaseUnregisteredDealer TotalValueAdded)
-save "${features_path}/FeatureReturns_new.dta", replace
+save "${features_path}/FeatureReturns.dta", replace
 
 * Merging bogus dealers information
-use "${features_path}/FeatureReturns_new.dta", clear
+use "${features_path}/FeatureReturns.dta", clear
 drop _merge
 destring Mtin, replace
 merge m:1 Mtin using "${output_path}\bogus_consolidated.dta"
@@ -427,7 +421,7 @@ gen bogus_flag = 0
 replace bogus_flag = 1 if _merge == 3 
 drop if _merge == 2 
 drop Reason inspection_year _merge
-save "${features_path}/FeatureReturns_new_v2.dta", replace
+save "${features_path}/FeatureReturns_v2.dta", replace
 
 *Merge with status of bogus firms
 use "${output_path}/dp_form.dta", clear
@@ -436,14 +430,14 @@ drop if Mtin == ""
 tempfile temp3
 save temp3, replace
 
-use "${features_path}/FeatureReturns_new_v2.dta", clear
+use "${features_path}/FeatureReturns_v2.dta", clear
 tostring Mtin, replace
 merge m:1 Mtin using temp3
 drop if _merge==2
 drop _merge
-save "${features_path}/FeatureReturns_new_v3.dta", replace
+save "${features_path}/FeatureReturns_v3.dta", replace
 
-use "${features_path}/FeatureReturns_new_v3.dta", clear
+use "${features_path}/FeatureReturns_v3.dta", clear
 merge 1:1 Mtin TaxQuarter using "${features_path}/RegisteredSales_AllQuarters.dta"
 drop if _merge==2
 gen UnTaxProp=UnregisteredSalesTax/OutputTaxBeforeAdjustment
@@ -454,25 +448,10 @@ drop if TaxQuarter <=8 // dropping all returns before the FY 2012-13
 save "${features_path}/FeatureReturns.dta", replace
 
 use "${features_path}/FeatureReturns.dta"
-merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales_new.dta", keep(master match) generate(salesds_merge)
-merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessPurchases_new.dta", keep(master match) generate(purchaseds_merge)
-save "${features_path}/FeatureReturnsWithDS_new.dta", replace
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales.dta", keep(master match) generate(salesds_merge)
+merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessPurchases.dta", keep(master match) generate(purchaseds_merge)
+save "${features_path}/FeatureReturnsWithDS.dta", replace
 
-******************* temp ********************
-/*Temp files created to test and run networkfeatures.py 
-code for 1 year */
-use "${features_path}/FeatureReturns.dta", clear
-keep if TaxQuarter >=17 & TaxQuarter <=20
-save "${features_path}/Temp_FeatureReturns_1415.dta", replace
-
-use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
-keep if TaxQuarter >=17 & TaxQuarter <=20
-save "${features_path}/Temp_SalesTaxAmount_1415.dta", replace
- 
-
-use "${features_path}/PurchaseTaxAmount_AllQuarters.dta", clear
-keep if TaxQuarter >=17 & TaxQuarter <=20
-save "${features_path}/Temp_PurchaseTaxAmount_1415.dta", replace
  
 
 

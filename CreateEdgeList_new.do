@@ -636,24 +636,45 @@ save "${features_path}\SalesTaxAmount_`var1'_`var2'.dta", replace
 }
 }
 
-use "${features_path}/SalesTaxAmount_2012_new.dta", clear
-append using "${features_path}/SalesTaxAmount_2013_new.dta"
-append using "${features_path}/SalesTaxAmount_2014_new.dta"
-append using "${features_path}/SalesTaxAmount_2015_q1_new.dta"
-append using "${features_path}/SalesTaxAmount_2015_q2_new.dta"
-append using "${features_path}/SalesTaxAmount_2015_q3_new.dta"
-append using "${features_path}/SalesTaxAmount_2015_q4_new.dta"
-append using "${features_path}/SalesTaxAmount_2016_q1_new.dta"
-append using "${features_path}/SalesTaxAmount_2016_q2_new.dta"
-append using "${features_path}/SalesTaxAmount_2016_q3_new.dta"
-append using "${features_path}/SalesTaxAmount_2016_q4_new.dta"
+use "${features_path}/SalesTaxAmount_2012.dta", clear
+append using "${features_path}/SalesTaxAmount_2013.dta"
+append using "${features_path}/SalesTaxAmount_2014.dta"
+append using "${features_path}/SalesTaxAmount_2015_q1.dta"
+append using "${features_path}/SalesTaxAmount_2015_q2.dta"
+append using "${features_path}/SalesTaxAmount_2015_q3.dta"
+append using "${features_path}/SalesTaxAmount_2015_q4.dta"
+append using "${features_path}/SalesTaxAmount_2016_q1.dta"
+append using "${features_path}/SalesTaxAmount_2016_q2.dta"
+append using "${features_path}/SalesTaxAmount_2016_q3.dta"
+append using "${features_path}/SalesTaxAmount_2016_q4.dta"
 
-save "${features_path}/SalesTaxAmount_AllQuarters_new.dta", replace
-//save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
+//save "${features_path}/SalesTaxAmount_AllQuarters_new.dta", replace
+save "${features_path}/SalesTaxAmount_AllQuarters.dta", replace
 
-use "${features_path}/SalesTaxAmount_AllQuarters_new.dta", clear
+/* Splitting the data to run on NetworkFeatures.py */
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
 duplicates tag TaxQuarter Mtin SellerBuyerTin, gen(repeat1)
 tab repeat1
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=9 & TaxQuarter <=11
+save "${features_path}/SalesTaxAmount_9_11.dta", replace
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=13 & TaxQuarter <=16
+save "${features_path}/SalesTaxAmount_13_16.dta", replace
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=17 & TaxQuarter <=20
+save "${features_path}/SalesTaxAmount_17_20.dta", replace
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=21 & TaxQuarter <=24
+save "${features_path}/SalesTaxAmount_21_24.dta", replace
+
+use "${features_path}/SalesTaxAmount_AllQuarters.dta", clear
+keep if TaxQuarter >=25 & TaxQuarter <=28
+save "${features_path}/SalesTaxAmount_25_28.dta", replace
 
 *--------------------------------------------------------
 ** Quarterly 2a2b Purchase form

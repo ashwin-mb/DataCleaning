@@ -39,8 +39,9 @@ global prob_path "H:/Ashwin/dta/prob"
 
 use "${output_path}/form16_data_consolidated", clear
 
-drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"|TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"
-
+drop if TaxPeriod=="Annual-2012"|TaxPeriod=="First Halfyear-2012"|TaxPeriod=="Second Halfyear-2012"| ///
+	TaxPeriod=="Apr-2013"|TaxPeriod=="May-2013"|TaxPeriod=="First halfyearly-2012"| ///
+	TaxPeriod=="Second halfyearly-2012"
 //drop Tin T312203 T312202 Frequency T312020 T312021 DealerName DealerAddress DealerTelephone T312028 T312029 T312043 T312044 T312051 T312052 T312057 T312082 T312083 AccountNumber AccountType MICR BankDetails T312092 T312093 T312137 T312138 T312139 T312140 T312141 T312142 T312152 T312153 T312154 T312155 T312156 T312157 T312158 T312159 T312160 T312161 T312162 T312163 T312164 T312165 T312166 T312167
 //drop T312104 T312105 T312106 T312107 T312108 T312109 T312110 T312111 T312112 T312113 T312114 T312115 T312116 T312117 T312118 T312119 T312120 T312121 T312122 T312123 T312124 T312125 T312126 T312127 T312128 T312129 T312130 T312131 T312132 T312133 T312134 Name Designation Place Date TDSString Receipt2A2B T312170 T312DF5 T312DF6 T312DF7 T312DF8 T312178 Signatory
 
@@ -238,7 +239,7 @@ by Mtin TaxPeriod: gen TotalReturnCount=_N
 keep if ReturnCount==1
 drop ReturnCount
 drop if Mtin == ""
-save "${features_path}/form16_v5.dta", replace
+save "${features_path}/form16_v5_new.dta", replace
 
 
 

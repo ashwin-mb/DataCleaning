@@ -230,3 +230,10 @@ gen Ward_Number=regexs(2) if (regexm(Ward, "([a-zA-Z]+)[ ]*([0-9]+)"))
 destring Ward_Number, replace
 tab Ward_Number
 save "${features_path}\FeatureDealerProfiles.dta", replace
+
+* Cleaning Mtins
+use "${features_path}\FeatureDealerProfiles.dta", clear
+duplicates tag Mtin, gen(repeat)
+drop if repeat!=0
+drop repeat
+save "${features_path}\FeatureDealerProfiles.dta", replace

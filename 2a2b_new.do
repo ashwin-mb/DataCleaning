@@ -245,3 +245,11 @@ tab TaxYear
 drop if TaxYear!=2014
 save "${output_path}/2a2b_quarterly_2014.dta", replace
 
+** Cleaning data - Purchase or Sale **
+//use "${output_path}/2a2b_quarterly_2013.dta", clear
+//use "${output_path}/2a2b_quarterly_2014.dta", clear
+use "${output_path}/2a2b_2016_q4.dta", clear
+tab SaleOrPurchase
+keep if SaleOrPurchase=="AE" | SaleOrPurchase=="AN" | SaleOrPurchase=="BF"
+tab TaxYear
+use "${output_path}/2a2b_2016_q4.dta", clear

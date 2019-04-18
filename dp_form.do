@@ -99,16 +99,17 @@ replace CancellationDate = "2015-08-03" if Mtin == "1056028"
 
 save "${output_path}/dp_form.dta", replace
 
+** drop empty mtin values
+use "${output_path}/dp_form.dta", clear
+drop if Mtin == ""
+save "${output_path}/dp_form.dta", replace
+
 ************** Create list of unique TIN numbers **********
 * Create list of unique TIN number and their status, year of cancellation
 use "${output_path}/dp_form.dta", clear
-
 gen CancellationYear = ""
 replace CancellationYear = regexs(0) ///
 	if regexm(CancellationDate, "([0-9][0-9][0-9][0-9])")
-
-keep Mtin OriginalRegistrationDate RegistrationDate RegistrationStatus CancellationYear 
-
-save "${output_path}/unique_mtin_dp.dta", replace // Contains 92 missing TIN values
-
+keep Mtin OriginalRegistrationDate OptComposition RegistrationDate RegistrationStatus CancellationYear 
+save "${output_path}/unique_mtin_dp.dta", replace
 

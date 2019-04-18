@@ -25,12 +25,41 @@ global input_path1 "H:/Ashwin/dta/original"
 global input_path2 "H:/Ashwin/dta/intermediate"
 global input_path3 "H:/Ashwin/dta/intermediate2"
 global temp_path1 "H:/Ashwin/dta/temp"
+global input_path4 "H:/Ashwin/dta"
 
 *output files*
 global output_path "H:/Ashwin/dta/final"
 global analysis_path "H:/Ashwin/dta/analysis"
 global qc_path "H:/Ashwin/dta/qc"
 global prob_path "H:/Ashwin/dta/prob"
+global features_path "H:/Ashwin/dta/bogusdealers"
+global features_final "H:/Ashwin/dta/features"
+global temp_path2 "Z:/features"
+
+
+*--------------------------------------------------------
+** Basic Numbers
+*--------------------------------------------------------
+use "${output_path}/bogus_consolidated.dta", clear
+tab inspection_year
+
+/*
+inspection_ |
+       year |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       1213 |          1        0.02        0.02
+       1314 |          3        0.05        0.06
+       1415 |      1,586       25.49       25.56
+       1516 |      3,667       58.95       84.50
+       1617 |        964       15.50      100.00
+------------+-----------------------------------
+      Total |      6,221      100.00
+*/
+
+tostring Mtin, replace
+merge 1:m Mtin using "${output_path}/dp_form.dta"
+keep if _merge == 3 
+keep Mtin Reason inspection_year RegistrationStatus CancellationDate
 
 *--------------------------------------------------------
 ** Quarterly level summary stats of bogus firms
@@ -40,49 +69,321 @@ use "${output_path}/bogus_consolidated.dta", clear
 tostring Mtin, replace
 merge 1:m Mtin using "${output_path}/dp_form.dta"
 keep if _merge == 3 
-keep Mtin Reason inspection_year RegistrationStatus CancellationDate
+keep Mtin Reason inspection_year RegistrationDate RegistrationStatus CancellationDate
+tab RegistrationStatus
+/*
+ Registered |
+         or |
+  Cancelled |      Freq.     Percent        Cum.
+------------+-----------------------------------
+  Cancelled |      5,701       91.64       91.64
+ Registered |        520        8.36      100.00
+------------+-----------------------------------
+      Total |      6,221      100.00
+*/
 
 *Merge Form16 data with Bogus firms list* 
-merge 1:m Mtin using "${output_path}/form16_data_consolidated.dta"
+merge 1:m Mtin using "${output_path}/form16_latestreturns_consolidated.dta"
 
 *Retain only completely merged data
 keep if _merge == 3 
 
 tab TaxPeriod
-/* Number of forms filed by Firms per Quarter
 
+/* Number of forms filed by Firms per Quarter
     The tax period for |
  which the returns has |
             been filed |      Freq.     Percent        Cum.
 -----------------------+-----------------------------------
-    First Quarter-2013 |          5        0.03        0.03
-    First Quarter-2014 |        206        1.41        1.45
-    First Quarter-2015 |      1,857       12.74       14.19
-    First Quarter-2016 |      1,196        8.20       22.39
-   Fourth Quarter-2013 |          8        0.05       22.45
-   Fourth Quarter-2014 |      1,349        9.25       31.70
-   Fourth Quarter-2015 |      1,485       10.19       41.89
-   Fourth Quarter-2016 |        616        4.23       46.11
-   Second Quarter-2013 |          7        0.05       46.16
-   Second Quarter-2014 |        725        4.97       51.14
-   Second Quarter-2015 |      2,082       14.28       65.42
-   Second Quarter-2016 |      1,047        7.18       72.60
-    Third Quarter-2013 |          5        0.03       72.63
-    Third Quarter-2014 |      1,301        8.93       81.56
-    Third Quarter-2015 |      1,899       13.03       94.59
-    Third Quarter-2016 |        789        5.41      100.00
+    First Quarter-2013 |          5        0.05        0.05
+    First Quarter-2014 |        185        1.69        1.73
+    First Quarter-2015 |      1,444       13.16       14.89
+    First Quarter-2016 |        843        7.68       22.57
+   Fourth Quarter-2013 |          8        0.07       22.64
+   Fourth Quarter-2014 |      1,081        9.85       32.49
+   Fourth Quarter-2015 |      1,115       10.16       42.65
+   Fourth Quarter-2016 |        419        3.82       46.47
+   Second Quarter-2013 |          6        0.05       46.52
+   Second Quarter-2014 |        626        5.70       52.22
+   Second Quarter-2015 |      1,515       13.80       66.03
+   Second Quarter-2016 |        704        6.41       72.44
+    Third Quarter-2013 |          5        0.05       72.49
+    Third Quarter-2014 |      1,099       10.01       82.50
+    Third Quarter-2015 |      1,403       12.78       95.28
+    Third Quarter-2016 |        518        4.72      100.00
 -----------------------+-----------------------------------
-                 Total |     14,577      100.00
-
+                 Total |     10,976      100.00
 */
 
 * Contains list of bogus firms that have form16 data
 save "${temp_path1}/bogus_form16_merged.dta", replace 
 
+
+* Distribution of firms by registrationstatus across taxquarters
+use "${temp_path1}/bogus_form16_merged.dta", clear
+
+gen TaxQuarter =0
+replace TaxQuarter=13 if TaxPeriod=="First Quarter-2013"
+replace TaxQuarter=14 if TaxPeriod=="Second Quarter-2013"
+replace TaxQuarter=15 if TaxPeriod=="Third Quarter-2013"
+replace TaxQuarter=16 if TaxPeriod=="Fourth Quarter-2013"
+replace TaxQuarter=17 if TaxPeriod=="First Quarter-2014"
+replace TaxQuarter=18 if TaxPeriod=="Second Quarter-2014"
+replace TaxQuarter=19 if TaxPeriod=="Third Quarter-2014"
+replace TaxQuarter=20 if TaxPeriod=="Fourth Quarter-2014"
+replace TaxQuarter=21 if TaxPeriod=="First Quarter-2015"
+replace TaxQuarter=22 if TaxPeriod=="Second Quarter-2015"
+replace TaxQuarter=23 if TaxPeriod=="Third Quarter-2015"
+replace TaxQuarter=24 if TaxPeriod=="Fourth Quarter-2015"
+replace TaxQuarter=25 if TaxPeriod=="First Quarter-2016"
+replace TaxQuarter=26 if TaxPeriod=="Second Quarter-2016"
+replace TaxQuarter=27 if TaxPeriod=="Third Quarter-2016"
+replace TaxQuarter=28 if TaxPeriod=="Fourth Quarter-2016"
+
+save "${temp_path1}/bogus_form16_merged.dta", replace 
+
+tab TaxQuarter RegistrationStatus
+
+/*         |     Registered or
+           |       Cancelled
+TaxQuarter | Cancelled  Registe.. |     Total
+-----------+----------------------+----------
+        13 |         2          3 |         5 
+        14 |         3          3 |         6 
+        15 |         2          3 |         5 
+        16 |         5          3 |         8 
+        17 |       160         25 |       185 
+        18 |       555         71 |       626 
+        19 |       956        143 |     1,099 
+        20 |       894        187 |     1,081 
+        21 |     1,174        270 |     1,444 
+        22 |     1,176        339 |     1,515 
+        23 |     1,020        383 |     1,403 
+        24 |       717        398 |     1,115 
+        25 |       439        404 |       843 
+        26 |       300        404 |       704 
+        27 |       120        398 |       518 
+        28 |        36        383 |       419 
+-----------+----------------------+----------
+     Total |     7,559      3,417 |    10,976 
+*/
+
+*Calculating average quarter life span of bogus/ bogus_registered/ bogus_cancelled
+drop count_1
+bys Mtin: gen count_1 = _N
+duplicates drop Mtin RegistrationStatus count_1, force
+gen total_count = _N
+bys RegistrationStatus: gen total_count_status = _N
+bys RegistrationStatus: egen total_returns = sum(count_1)
+egen total_returns_1 = sum(count_1)
+duplicates drop total_count total_count_status total_returns total_returns_1, force
+drop Mtin TaxQuarter count_1
+gen av_life_span_bogus = total_returns_1/total_count
+gen av_life_span_reg = total_returns/total_count_status
+
+/*
+RegistrationStatus	av_life_span_reg 	av_life_span_bogus
+Cancelled				2.336631			2.959288
+Registered				7.208861			2.959288
+*/
+
+* Understanding returns filed by cancelled firms
+use "${temp_path1}/bogus_form16_merged.dta", clear
+gen CancellationYear = regexs(0) if (regexm(CancellationDate, "[0-9][0-9][0-9][0-9]"))
+gen CancellationMonth = regexs(1) if (regexm(CancellationDate, "[-]([0-9][0-9])[-]"))
+destring CancellationYear, replace
+destring CancellationMonth, replace
+//drop CancellationQuarter
+gen CancellationQuarter = "12" if (CancellationYear == 2013 & (CancellationMonth>=1 & CancellationMonth<=3))
+replace CancellationQuarter = "13" if (CancellationYear == 2013 & (CancellationMonth>=4 & CancellationMonth<=6))
+replace CancellationQuarter = "14" if (CancellationYear == 2013 & (CancellationMonth>=7 & CancellationMonth<=9))
+replace CancellationQuarter = "15" if (CancellationYear == 2013 & (CancellationMonth>=10 & CancellationMonth<=12))
+replace CancellationQuarter = "16" if (CancellationYear == 2014 & (CancellationMonth>=1 & CancellationMonth<=3))
+replace CancellationQuarter = "17" if (CancellationYear == 2014 & (CancellationMonth>=4 & CancellationMonth<=6))
+replace CancellationQuarter = "18" if (CancellationYear == 2014 & (CancellationMonth>=7 & CancellationMonth<=9))
+replace CancellationQuarter = "19" if (CancellationYear == 2014 & (CancellationMonth>=10 & CancellationMonth<=12))
+replace CancellationQuarter = "20" if (CancellationYear == 2015 & (CancellationMonth>=1 & CancellationMonth<=3))
+replace CancellationQuarter = "21" if (CancellationYear == 2015 & (CancellationMonth>=4 & CancellationMonth<=6))
+replace CancellationQuarter = "22" if (CancellationYear == 2015 & (CancellationMonth>=7 & CancellationMonth<=9))
+replace CancellationQuarter = "23" if (CancellationYear == 2015 & (CancellationMonth>=10 & CancellationMonth<=12))
+replace CancellationQuarter = "24" if (CancellationYear == 2016 & (CancellationMonth>=1 & CancellationMonth<=3))
+replace CancellationQuarter = "25" if (CancellationYear == 2016 & (CancellationMonth>=4 & CancellationMonth<=6))
+replace CancellationQuarter = "26" if (CancellationYear == 2016 & (CancellationMonth>=7 & CancellationMonth<=9))
+replace CancellationQuarter = "27" if (CancellationYear == 2016 & (CancellationMonth>=10 & CancellationMonth<=12))
+replace CancellationQuarter = "28" if (CancellationYear == 2017 & (CancellationMonth>=1 & CancellationMonth<=3))
+replace CancellationQuarter = "After 28" if (CancellationYear == 2017 & CancellationMonth> 3)
+
+tab CancellationQuarter if TaxQuarter == 28
+/* Cancellatio |
+   nQuarter |      Freq.     Percent        Cum.
+------------+-----------------------------------
+         24 |          1        2.78        2.78
+         27 |          1        2.78        5.56
+         28 |         14       38.89       44.44
+   After 28 |         20       55.56      100.00
+------------+-----------------------------------
+      Total |         36      100.00
+*/
+
+*save the file to conduct further analysis in the python
+keep Mtin TaxQuarter CancellationQuarter RegistrationStatus
+export delim "${features_path}/bogus_cancellationquarter.csv", replace 
+
+
+* Reasons bogus firms didn't file returns before quarter<17
+use "${temp_path1}/bogus_form16_merged.dta", clear
+keep Mtin RegistrationStatus RegistrationDate TaxQuarter inspection_year
+gen RegistrationMonth = month(RegistrationDate)
+gen RegistrationYear = year(RegistrationDate)
+tab RegistrationYear
+
+/* 
+Registratio |
+      nYear |      Freq.     Percent        Cum.
+------------+-----------------------------------
+       2013 |         49        0.45        0.45
+       2014 |      4,079       37.16       37.61
+       2015 |      6,069       55.29       92.90
+       2016 |        776        7.07       99.97
+       2017 |          3        0.03      100.00
+------------+-----------------------------------
+      Total |     10,976      100.00
+*/
+
+* Number of the firms that have filed returns
+use "${temp_path1}/bogus_form16_merged.dta", clear
+ 
+keep Mtin RegistrationStatus CancellationDate inspection_year
+duplicates drop
+tab RegistrationStatus
+
+/* Types of firms that filed returns
+ Registered |
+         or |
+  Cancelled |      Freq.     Percent        Cum.
+------------+-----------------------------------
+  Cancelled |      3,235       87.22       87.22
+ Registered |        474       12.78      100.00
+------------+-----------------------------------
+      Total |      3,709      100.00
+*/
+
+* Distribution of ward (bogus and total)
+use "${features_final}/All_return_features_minus_q12.dta", clear
+duplicates drop Mtin, force
+tab Ward_Number
+collapse (count) Mtin (sum)bogus_flag, by(Ward_Number)
+rename (Mtin bogus_flag) (total_firms bogus_firms)
+gen perc_bogus = bogus_firms/total_firms 
+replace perc_bogus = perc_bogus * 100
+export delim "H:/Ashwin/bogus_ward_distribution.csv", replace
+twoway bar perc_bogus Ward_Number, barw(2)
+destring  Ward_Number, replace
+
+* Distribution of ward for OLD DATA(bogus and total)
+import delim "D:/Ofir/output_data/all_returns_features_minus_q12.csv", clear case(preserve) varn(1)
+save "D:/Ofir/output_data/all_returns_features_minus_q12.dta", replace
+
+use "D:/Ofir/output_data/all_returns_features_minus_q12.dta", clear
+duplicates drop DealerTIN, force
+tab Ward_Number
+collapse (count) DealerTIN (sum) bogus_flag, by(Ward_Number)
+
+
+
+
+* Distribution of start year (bogus and total)
+use "${features_final}/All_return_features_minus_q12.dta", clear
+duplicates drop Mtin, force
+tab StartYear
+collapse (count) Mtin (sum)bogus_flag, by(StartYear)
+drop if StartYear >2017 | StartYear<1900
+rename (Mtin bogus_flag) (total_firms bogus_firms)
+gen perc_bogus = bogus_firms/total_firms 
+replace perc_bogus = perc_bogus * 100
+gen StartYear_1 = "Before 2013" if StartYear <2013 // no bogus firms before 2013
+replace StartYear_1 = "2013" if StartYear==2013
+replace StartYear_1 = "2014" if StartYear==2014
+replace StartYear_1 = "2015" if StartYear==2015
+replace StartYear_1 = "2016" if StartYear==2016
+replace StartYear_1 = "2017" if StartYear==2017
+collapse (sum) total_firms (sum)bogus_firms, by(StartYear_1)
+gen perc_bogus = bogus_firms/total_firms 
+replace perc_bogus = perc_bogus * 100
+export delim "H:/Ashwin/bogus_startyear_distribution.csv", replace
+twoway bar perc_bogus StartYear_1, barw(2)
+gen index = _n
+replace index = 0 if index == 6
+gsort index
+graph bar perc_bogus, over(StartYear_1) blabel(bar)
+destring  Ward_Number, replace
+
+
+
+
+*--------------------------------------------------------
+** Quarter-wise distribution of ITC/ Output Tax Liability
+*--------------------------------------------------------
+
+use "${temp_path1}/bogus_form16_merged.dta", clear
+destring Mtin, replace
+collapse (sum) TotalOutputTax (sum)TotalTaxCredit (count)Mtin, by(TaxQuarter)
+twoway (connected TotalOutputTax TotalTaxCredit TaxQuarter, c(1) yaxis(1)) ///
+	   (connected Mtin TaxQuarter, c(1) yaxis(2)), title("Bogus Firms") xscale(range(14 28))
+
+*--------------------------------------------------------
+** Distribution of ITC for top 5000 firms
+*--------------------------------------------------------
+import delim "H:/Ashwin/BogusFirmCatching_minus_glm/output_data/avg_predictions20190227.csv", varn(1) clear case(preserve)
+tostring Mtin, replace
+*Merge Form16 data with Bogus firms list* 
+merge 1:m Mtin using "${output_path}/form16_latestreturns_consolidated.dta"
+keep if _merge==3
+bysort Mtin: egen TotalTaxCredit_1 = sum(TotalTaxCredit)
+duplicates drop Mtin, force
+keep Mtin bogus_flag model_score_bogus_flag TotalTaxCredit_1
+gsort -model_score_bogus_flag
+export delim "H:/Ashwin/avg_predictions_itc_claimed.csv", replace
+
+*top 5000 firms (contains already identified firms)
+gen index = _n
+keep if index <=5000
+twoway (bar TotalTaxCredit_1 index if bogus_flag == 0, mcolor (`f0') c(1) yaxis(1)) ///
+	   (bar TotalTaxCredit_1 index  if bogus_flag == 1, mcolor(`f1') c(1) yaxis(1)) ///
+	   (line model_score_bogus_flag index, c(1) yaxis(2))
+
+*top 1000 firms (all non-identified firms)
+keep if bogus_flag == 0 
+gen index = _n
+keep if index <=1000
+twoway (bar  TotalTaxCredit_1 index, c(1) yaxis(1)) ///
+	   (line model_score_bogus_flag index, c(1) yaxis(2))
+
+*Log distribution of ITC - new and old firms
+use "${output_path}/form16_latestreturns_consolidated.dta", clear
+destring Mtin, replace
+merge m:1 Mtin using "${output_path}/bogus_consolidated.dta"
+drop if _merge == 2 
+gen bogus_flag = 0 
+replace bogus_flag = 1 if _merge == 3
+//collapse (sum) TotalOutputTax (sum)TotalTaxCredit (count)Mtin, by(TaxQuarter)
+collapse (sum) TotalTaxCredit (mean) bogus_flag, by(Mtin)
+gen log_TotalTaxCredit = 1+ log10(TotalTaxCredit)   
+twoway (hist log_TotalTaxCredit, density legend(label(1 "Total_ITC"))) /// 
+	   (hist log_TotalTaxCredit if bogus_flag == 1, bcolor(red) density legend(label(2 "Total_ITC_bogus")))
+*	   (hist log_TotalTaxCredit if bogus_flag == 0, bcolor(blue))
+	   
+import delim "H:/Ashwin/avg_predictions_itc_claimed.csv", clear varn(1) case(preserve)  
+gen log_TotalTaxCredit = 1 + log10(TotalTaxCredit_1)
+gsort -model_score_bogus_flag
+gen index = _n
+keep if index <=3000
+hist log_TotalTaxCredit, subtitle("Top 3000 suspicious firms for new data")
+	   
 *--------------------------------------------------------
 ** Summary Stats of bogus firms at quarter level
 *--------------------------------------------------------
-use "${temp_path1}/bogus_form16_merged.dta", clear
+use "${temp_path1}/form16_latestreturns_consolidated.dta", clear
 //keep Mtin Reason inspection_year 
 //export excel "${temp_path1}/bogus_form16_merged.xlsx", firstrow(variables)
 

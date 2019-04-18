@@ -30,7 +30,7 @@ def create_network_features(Returns,Network,name='Sales',Start=9,End=12):
 #         kc = kcore.create(g)
 #         g.vertices['core_id'] = kc['graph'].vertices['core_id']
 #        g.vertices.export_csv('H:\\Ashwin\\dta\\sample_bogusdealersNetworkFeaturesSales17.csv')
-        g.vertices.export_csv('H:\\Ashwin\\dta\\bogusdealersNetworkFeatures{}{}.csv'.format(name,quarter))
+        g.vertices.export_csv('H:\\Ashwin\\dta\\bogusdealers\\NetworkFeatures{}{}.csv'.format(name,quarter))
 
 #Returns = pd.read_stata('H:\\Ashwin\\dta\\features\\Temp_FeatureReturns_1415.dta', convert_categoricals=False)
 Returns = pd.read_stata('H:\\Ashwin\\dta\\features\\FeatureReturns.dta', convert_categoricals=False)

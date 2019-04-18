@@ -70,18 +70,7 @@ tab cancellation_year
 *--------------------------------------------------------
 ** Plot a histogram of Refund Status
 	/* For each quarter, plot a histogram of refund at firm level */
-
-
-use "${output_path}/form16_data_consolidated.dta", clear
-
-duplicates tag MReturn_ID, gen(repeat1)
-gsort -repeat1 MReturn_ID //21 entries have same returnIds but different Mtins & Tax Period
-
-* Retain the latest returns
-gsort Mtin TaxPeriod -DateofReturnFiled
-duplicates drop Mtin TaxPeriod, force
-
-save "${output_path}/form16_latestreturns_consolidated.dta", replace
+use "${output_path}/form16_latestreturns_consolidated.dta", clear
 
 local quarter "First Quarter-2012" "Second Quarter-2012" ///
 	"Third Quarter-2012" "Fourth Quarter-2012" "First Quarter-2013" ///

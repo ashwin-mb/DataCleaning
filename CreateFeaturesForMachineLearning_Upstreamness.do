@@ -155,23 +155,3 @@ drop VatRatio CreditRatio SellerBuyerTin UnTaxProp returns_merge WUnTaxProp WCre
 
 save "${features_path}/FeatureDownStreamnessSales.dta", replace
 
-*--------------------------------------------------------
-** Conduct Quality checks
-*--------------------------------------------------------
-use "${features_path}/FeatureReturns.dta", clear
-merge 1:1 Mtin TaxQuarter using "${features_path}/FeatureDownStreamnessSales.dta", keep(master match) generate(ds_purchase_merge)
-tab TaxQuarter ds_purchase_merge
-sum TotalSellers PurchaseDSCreditRatio PurchaseDSUnTaxProp PurchaseDSVatRatio if ds_purchase_merge==3&bogus_online==0
-sum TotalSellers PurchaseDSCreditRatio PurchaseDSUnTaxProp PurchaseDSVatRatio if ds_purchase_merge==3&bogus_online==1
-
-sum TotalSellers PurchaseDSCreditRatio PurchaseDSUnTaxProp PurchaseDSVatRatio Missing_PurchaseDS* if ds_purchase_merge==3&bogus_online==1
-sum TotalSellers PurchaseDSCreditRatio PurchaseDSUnTaxProp PurchaseDSVatRatio Missing_PurchaseDS* if ds_purchase_merge==3&bogus_online==0
-
-sum TotalBuyers SalesDSUnTaxProp SalesDSCreditRatio SalesDSVatRatio Missing_SalesDSUnTaxProp Missing_SalesDS* if ds_purchase_merge==3&bogus_online==1
-sum TotalBuyers SalesDSUnTaxProp SalesDSCreditRatio SalesDSVatRatio Missing_SalesDSUnTaxProp Missing_SalesDS* if ds_purchase_merge==3&bogus_online==0
-
-tab Missing_PurchaseDS*
-tab Missing_PurchaseDSCreditRatio
-tab Missing_PurchaseDSUnTaxProp
-tab Missing_PurchaseDSVatRatio
-tab Missing_PurchaseDSUnTaxProp bogus_online

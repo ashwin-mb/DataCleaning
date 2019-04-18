@@ -97,8 +97,7 @@ append using "${input_path3}\form16_`var'_data_noduplicates.dta"
 
 save "${output_path}\form16_data_consolidated.dta", replace
 
-* Rename TaxPeriod
-
+**** Rename TaxPeriod
 use "${output_path}\form16_data_consolidated.dta", clear
 
 replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Third quaterly-2012"
@@ -108,6 +107,38 @@ replace TaxPeriod = "Fourth Quarter-2012" if TaxPeriod == "Forth Quarter-2012"
 replace TaxPeriod = "Third Quarter-2012" if TaxPeriod == "Thrid Quater-2012"
 
 save "${output_path}\form16_data_consolidated.dta", replace
+
+**** Remove TaxPeriod before 2012 
+use "${output_path}\form16_data_consolidated.dta", clear
+
+drop if TaxPeriod == "99-2012" | TaxPeriod == "Apr-2011" | TaxPeriod == "Aug-2011" ///
+	| TaxPeriod == "Dec-2011" | TaxPeriod == "Feb-2012" | TaxPeriod == "First Quarter-2010" ///
+	| TaxPeriod == "Fourth Quarter-2010" | TaxPeriod == "Fourth Quarter-2011" ///
+	| TaxPeriod == "Jan-2012" | TaxPeriod == "Jul-2011" | TaxPeriod == "Jun-2011" ///
+	| TaxPeriod == "Mar-2012" | TaxPeriod == "May-2011" | TaxPeriod == "May-2013" ///
+	| TaxPeriod == "Nov-2011" | TaxPeriod == "Oct-2011" | TaxPeriod == "Second Quarter-2010" ///
+	| TaxPeriod == "Second Quarter-2011" | TaxPeriod == "Second halfyearly-2010" ///
+	| TaxPeriod == "Second halfyearly-2010" | TaxPeriod == "Second halfyearly-2011" ///
+	| TaxPeriod == "Sep-2011" | TaxPeriod == "Apr-2013" ///
+	| TaxPeriod == "Third Quarter-2009" | TaxPeriod == "Third Quarter-2010"
+
+save "${output_path}\form16_data_consolidated.dta", replace
+
+** Create form16 with latest returns**
+use "${output_path}/form16_data_consolidated.dta", clear
+
+duplicates tag MReturn_ID, gen(repeat1)
+gsort -repeat1 MReturn_ID //21 entries have same returnIds but different Mtins & Tax Period
+
+* Retain the latest returns
+gsort Mtin TaxPeriod -DateofReturnFiled
+duplicates drop Mtin TaxPeriod, force
+drop if Mtin == ""
+drop if TaxPeriod == ""
+save "${output_path}/form16_latestreturns_consolidated.dta", replace
+
+** Add TaxQuarter
+use "${output_path}/form16_latestreturns_consolidated.dta", clear
 
 *--------------------------------------------------------
 ** Clean Form16_commodityCode //Need to save in output file
@@ -134,6 +165,7 @@ gsort -Repetitions_5 MReturn_ID Commodity_code Tax_rate ///
 use "${output_path}\form16_data_consolidated.dta", clear
 keep Mtin TaxPeriod
 duplicates drop
+drop if Mtin == "" 
 save "${output_path}\unique_mtin_form16.dta", replace
 
 *Unique Returns
