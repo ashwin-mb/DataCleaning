@@ -170,7 +170,7 @@ def set_profile_factors(fr):
     fr['DummyTelecom']=fr['DummyTelecom'].asfactor()
     fr['profile_merge']=fr['profile_merge'].asfactor()
     fr['StartYear']=fr['StartYear'].asfactor()
-    fr['Ward']=fr['Ward'].asfactor()
+#    fr['Ward']=fr['Ward'].asfactor()
     
     #set_transaction_factors
     fr['_merge_purchasediscrepancy']=fr['_merge_purchasediscrepancy'].asfactor()

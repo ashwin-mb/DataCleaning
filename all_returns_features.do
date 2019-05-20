@@ -336,25 +336,98 @@ replace RefundClaimedBoolean_1 = "False" if RefundClaimedBoolean == 0
 drop RefundClaimedBoolean
 rename RefundClaimedBoolean_1 RefundClaimedBoolean
 
-*drop label for TaxQuarter
-label drop quarter
-save "${features_final}/All_return_features.dta", replace
-export delim H:/Ashwin/dta/features/All_return_features.csv, replace
-
-*Dropping Q4 of 2012-13 
-drop if TaxQuarter == 12
-save "${features_final}/All_return_features_minus_q12.dta", replace
+*--------------------------------------------------------
+** Generating the master file
+*--------------------------------------------------------
 
 **Dropping CancellationReason column 
 	/* This creates a problem when converting to csv file
 	Need to understand why */
-use "${features_final}/All_return_features_minus_q12.dta", clear
+//use "${features_final}/All_return_features.dta", clear
 drop CancellationReason
-*Save as csv file
-save "${features_final}/All_return_features_minus_q12.dta", replace
-export delim H:/Ashwin/dta/features/All_return_features_minus_q12.csv, replace
+label drop quarter
+save "${features_final}/All_return_features.dta", replace
+export delim H:/Ashwin/dta/features/All_return_features.csv, replace
+
+use "H:/Ashwin/dta/features/All_return_features.dta", replace
+drop Ward BalanceBroughtForward 
+rename (Ward_Number) Ward
+gen salesnetwork_merge_1 = "both" if salesnetwork_merge == 3
+replace salesnetwork_merge_1 = "left_only" if salesnetwork_merge == 1 
+drop salesnetwork_merge
+rename salesnetwork_merge_1 salesnetwork_merge
+
+gen purchasenetwork_merge_1 = "both" if purchasenetwork_merge == 3
+replace purchasenetwork_merge_1 = "left_only" if purchasenetwork_merge == 1 
+drop purchasenetwork_merge
+rename purchasenetwork_merge_1 purchasenetwork_merge
+
+gen purchaseds_merge_1 = "both" if purchaseds_merge == 3
+replace purchaseds_merge_1 = "left_only" if purchaseds_merge == 1 
+drop purchaseds_merge
+rename purchaseds_merge_1 purchaseds_merge
+save "H:/Ashwin/dta/features/All_return_features.dta", replace
+
+*--------------------------------------------------------
+** Create different features files for processing 
+*--------------------------------------------------------
+*dropping tax quarter ie 2012-13 q4 is dropped from the analysis
+drop if TaxQuarter == 12 
+drop fold // this column was created later in python and added to this file. Hence dropping. Will be created in python again
+drop CancellationReason
+save "H:/Ashwin/dta/features/All_return_features_minus_q12.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_minus_q12.csv", replace
+
+*create sample data set of 50000 entries
+use "${features_final}/All_return_features_minus_q12.dta", clear
+gen index = _n
+drop if index >50000
+drop index
+save "${features_final}/All_return_features_minus_q12_sample.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_minus_q12_sample.csv", replace
+
+*create master file after dropping ward
+use "${features_final}/All_return_features_minus_q12.dta", clear
+drop Ward
+save "${features_final}/All_return_features_minus_q12_ward.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_minus_q12_ward.csv", replace
+
+*create master file with TaxQuarter > 20
+*creating this to try the old model which is until q 20 and apply on new data from q >20 
+use "${features_final}/All_return_features_minus_q12.dta", clear
+drop if TaxQuarter<21
+save "${features_final}/All_return_features_after_q20.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_after_q20.csv", replace
+
+*create master file with TaxQuarter > = 18
+*creating this to create a model which uses only taxquarter >=18
+use "${features_final}/All_return_features_minus_q12.dta", clear
+drop if TaxQuarter<18
+save "${features_final}/All_return_features_after_q18.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_after_q18.csv", replace
+
+*create master file after dropping firms before StartYear<2013
+use "${features_final}/All_return_features_minus_q12.dta", clear
+drop if StartYear<2013
+save "${features_final}/All_return_features_after_2013.dta", replace
+export delim "H:/Ashwin/dta/features/All_return_features_after_2013.csv", replace
 
 
+
+
+*--------------------------------------------------------
+** Comparing Old and New All_returns_feature file 
+*--------------------------------------------------------
+*accessing old original master file 
+use "D:/Ofir/output_data/all_returns_features_minus_q12.dta", clear
+sum, separator(100) //all the variables are copied into excel
+
+*accessing old original master file 
+use "H:/Ashwin/dta/All_return_features_minus_q12_new.dta", clear
+drop TaxQuarter > 20 // to make it comparable to old data
+sum, separator(100) //all the variables are copied into excel
+
+// saved the file @ H:/Ashwin/Imp_files/Feature_sumstats_old_new.xlsx
 
 ****** create sample data
 use "${features_final}/All_return_features_minus_q12.dta", clear

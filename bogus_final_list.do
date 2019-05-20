@@ -52,7 +52,7 @@ tostring Mtin, replace
 merge 1:1 Mtin using "${output_path}/dp_form.dta", keepusing(CancellationReason RegistrationStatus CancellationDate)
 keep if _merge == 3
 drop _merge
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 use "${features_final}/All_return_features_minus_q12.dta", clear
 *calculate how long where the firms active (no of quarters)
@@ -65,42 +65,42 @@ duplicates drop Mtin, force
 drop TaxQuarter
 tostring Mtin, replace
 
-merge 1:1 Mtin using "${final_list}/intermediate/master_file.dta"
+merge 1:1 Mtin using "${final_list}/intermediate/master_file_new.dta"
 drop _merge
 isid Mtin
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 ** Merge the master file with prediction file ** 
 
 *1. performance * 
-import delim "${input_path5}/BogusFirmCatching_minus_glm/output_data/avg_predictions20190227.csv", ///
+import delim "${input_path5}/BogusFirmCatching_minus_glm/output_data/avg_predictions20190419.csv", ///
 		clear varn(1) case(preserve)
 tempfile temp1
 save `temp1'
 		
-use "${final_list}/intermediate/master_file.dta", clear
+use "${final_list}/intermediate/master_file_new.dta", clear
 destring Mtin, replace
 merge 1:1 Mtin using `temp1'
 drop _merge 
 rename model_score_bogus_flag p1
 gsort -p1 
 gen Ranking_Performance = _n
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 *2. Performance without ward*
-import delim "${input_path5}/BogusFirmCatching_minus_glm_ward/output_data/avg_predictions20190227.csv", ///
+import delim "${input_path5}/BogusFirmCatching_minus_glm_ward/output_data/avg_predictions20190419.csv", ///
 		clear varn(1) case(preserve)
 tempfile temp1
 save `temp1'
 		
-use "${final_list}/intermediate/master_file.dta", clear
+use "${final_list}/intermediate/master_file_new.dta", clear
 destring Mtin, replace
 merge 1:1 Mtin using `temp1'
 drop _merge 
 rename model_score_bogus_flag p2
 gsort -p2
 gen Ranking_Performance_Noward = _n
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 *3. Revenue Optimized*
 gen p3 = p1*TotalTaxCreditBeforeAdjustment
@@ -111,30 +111,32 @@ gen Ranking_RevenueOptimized = _n
 gen p4 = p2*TotalTaxCreditBeforeAdjustment
 gsort -p4
 gen Ranking_RevenueOptimized_Noward = _n
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 *5. Performance without DP (feature set 4 has network features + return features)
-import delim "${input_path5}/BogusFirmCatching_minus_glm\models\diff_feature_sets\20190227\feature_set_4\firm_period_predictions20190227.csv", ///
+import delim "${input_path5}/BogusFirmCatching_minus_glm/models/diff_feature_sets/20190419/feature_set_4/firm_period_predictions20190419.csv", ///
 		clear varn(1) case(preserve)
 collapse (mean) model_score_bogus_flag, by(Mtin)
 tempfile temp1
 save `temp1'
 
-use "${final_list}/intermediate/master_file.dta", clear
+use "${final_list}/intermediate/master_file_new.dta", clear
 destring Mtin, replace
 merge 1:1 Mtin using `temp1'
 drop _merge 
 rename model_score_bogus_flag p5
 gsort -p5
 gen Ranking_Performance_NoDP = _n
-save "${final_list}/intermediate/master_file.dta", replace
+save "${final_list}/intermediate/master_file_new.dta", replace
 
 *6. Revenue Optimized without DP
 gen p6 = p5*TotalTaxCreditBeforeAdjustment
 gsort -p6
 gen Ranking_RevenueOptimized_NoDP = _n
-save "${final_list}/final/master_file.dta", replace
+save "${final_list}/final/master_file_new.dta", replace
+export excel "${final_list}/final/master_file_new.xlsx", replace firstrow(var)
 
+/* Needs modification to the input file
 *7. Keeping firms with StartYear >= 2013
 import delim "${input_path5}/BogusFirmCatching_minus_glm_2013/output_data/firm_period_predictions20190227.csv", ///
 		clear varn(1) case(preserve)
@@ -142,22 +144,22 @@ collapse (mean) model_score_bogus_flag, by(Mtin)
 tempfile temp1
 save `temp1'
 
-use "${final_list}/final/master_file.dta", clear
+use "${final_list}/final/master_file_new.dta", clear
 destring Mtin, replace
 merge 1:1 Mtin using `temp1'
 drop _merge 
 rename model_score_bogus_flag p7
 gsort -p7
 gen Ranking_Performance_after_2013 = _n
-save "${final_list}/final/master_file.dta", replace
+save "${final_list}/final/master_file_new.dta", replace
 
 *8. Adding revenue optimized to firms wtih StartYear >= 2013
 gen p8 = p7*TotalTaxCreditBeforeAdjustment
 gsort -p8
 gen Ranking_RevenueOptimized_2013 = _n
-save "${final_list}/final/master_file.dta", replace
-export excel "${final_list}/final/master_file.xlsx", replace firstrow(var)
-
+save "${final_list}/final/master_file_new.dta", replace
+export excel "${final_list}/final/master_file_new.xlsx", replace firstrow(var)
+*/
 
 
 

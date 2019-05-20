@@ -32,13 +32,13 @@ label_var='bogus_flag'
 
 def do_all():
     init()
-    # femq12,ffemq12 = load_feature_label_table()
-    pdfemq12 = pd.read_csv(r"H:\Ashwin\dta\features\All_return_features_after_2013.csv")
-    pdfemq12['fold'] = (pdfemq12['TIN_hash_byte']/32).astype(int) #run fold command filteration
-    pdfemq12.to_csv(r"H:\Ashwin\dta\features\All_return_features_after_2013.csv", index = False)
+    # femq12,ffemq12 = load_feature_label_table()         
+    pdfemq12 = pd.read_csv(r"H:\Ashwin\dta\features\All_return_features_minus_q12_ward.csv"); pdfemq12['fold'] = (pdfemq12['TIN_hash_byte']/32).astype(int) #run fold command filteration
+    pdfemq12.to_csv(r"H:\Ashwin\dta\features\All_return_features_minus_q12_ward.csv")
+    pdfemq12 = pd.read_csv(r"H:\Ashwin\dta\features\All_return_features_minus_q12_ward.csv"); #pdfemq12['fold'] = (pdfemq12['TIN_hash_byte']/32).astype(int) #run fold command filteration
     #pdfemq12_sample = pd.read_csv(r"H:\Ashwin\dta\features\All_return_features_minus_q12_sample.csv")
 #   ffemq12 = h2o.H2OFrame(pdfemq12)
-    femq12 = h2o.import_file(r"H:\Ashwin\dta\features\All_return_features_after_2013.csv")
+    femq12 = h2o.import_file(r"H:\Ashwin\dta\features\All_return_features_minus_q12_ward.csv")
 #   femq12 = h2o.H2OFrame(pdfemq12)
     ffemq12 = load_h2odataframe_returns(femq12)#(use_pandas=True, header=False)
     different_feature_sets_save_predictions(ffemq12)
@@ -51,17 +51,18 @@ def do_all():
     plot_success_on_top_predictions_continuous()
     # example
     firm_period_predictions,cv_model = cv_predictions_each_tax_period(ffemq12) 
-    firm_period_predictions.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\output_data\firm_period_predictions20190227.csv",index=False)
+    firm_period_predictions.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\output_data\firm_period_predictions20190419.csv",index=False)
     explore_multiple_aggregations(firm_period_predictions,model_score_col)
-    avg_predictions = firm_period_predictions.groupby('Mtin').mean()
+    avg_predictions = firm_period_predictions.groupby('Mtin')[['bogus_flag','model_score_bogus_flag']].mean()
+    avg_predictions.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\output_data\avg_predictions20190419.csv",index=True)
     performance_on_top_recommendations(avg_predictions,model_score_col,label_var,1,plot=True)
     check_model_calibration(avg_predictions)
     
     ''' Calculating variable importance '''
-    cv1_model = h2o.load_model(r"H:\Ashwin\BogusFirmCatching_minus_glm\models\diff_feature_sets\20190227\feature_set_4\rf_cv_all_folds_20190227")
-#    cv1_model = h2o.load_model(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\rf_cv_all_folds_20190313")
+    cv1_model = h2o.load_model(r"H:\Ashwin\BogusFirmCatching_minus_glm\models\diff_feature_sets\20190419\feature_set_4\rf_cv_all_folds_20190420")
+#   cv1_model = h2o.load_model(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\rf_cv_all_folds_20190313")
     variable_imp =cv1_model._model_json['output']['variable_importances'].as_data_frame()
-    variable_imp.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm\models\diff_feature_sets\20190227\feature_set_4\features_variable_importance20190227.csv", index=False)
+    variable_imp.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm\models\diff_feature_sets\20190419\features_variable_importance20190419.csv", index=False)
     cv1_model.varimp_plot()
  
     ''' Loading old model and running new data with tax quarters > 20 on it '''
@@ -72,11 +73,11 @@ def do_all():
     
     #training the new data set using old trained model (cv_model is old trained model and dropping Ward )
     train_newdata = cv_model.predict(ffemq20).as_data_frame() 
-    train_newdata.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\OldModel_NewData_minus_ward.csv", index=False)
+    train_newdata.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\OldModel_NewData_minus_ward.csv", index=False)
     # merging the results with input new data
     newdata_oldmod = pdfemq20[['Mtin','TaxQuarter','bogus_flag']]
     newdata_oldmod['model_score_bogus_flag'] = train_newdata['p1']
-    newdata_oldmod.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\output_data\newdata_oldmod_firm_period_predictions20190227.csv",index=False)
+    newdata_oldmod.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\output_data\newdata_oldmod_firm_period_predictions20190419.csv",index=False)
     avg_predictions_newdata_oldmod = newdata_oldmod.groupby('Mtin')[['bogus_flag','model_score_bogus_flag']].mean()
     axes = plot_success_on_top_predictions_continuous(avg_predictions_newdata_oldmod,1000)
     axes.set_title('x-val all-time performance on top 1000'.title())
@@ -89,13 +90,13 @@ def do_all():
 #        print t
 #        print time.ctime()
 #        print '-'*30
-#        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_q{:02d}".format(t)
+#        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_q{:02d}".format(t)
 #        print 'save_dir'
 #        table_2 = pd.read_csv(save_dir+r"\point_in_time_performance.csv")
 #        table_2['t']-= 8
 #        table_2_list.append(table_2)
 #    table_2_consolidated = pd.concat(table_2_list)
-#    table_2_consolidated.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_performance.csv", index = False)
+#    table_2_consolidated.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_performance.csv", index = False)
 
 
 def init():
@@ -287,8 +288,8 @@ def load_feature_label_table(save_as_csv=False,femq12=None):
     """
     ultimate source of data is D:\data\PreliminaryAnalysis\BogusDealers\<dta & csv files>
     see also funcs from Shekhar's files:
-    load_*() in D:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\init_sm.py
-    load_everything() in D:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\ml_funcs.py
+    load_*() in D:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\init_sm.py
+    load_everything() in D:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\ml_funcs.py
     """
     if femq12 is None:
         femq12 = load_everything()
@@ -314,8 +315,8 @@ def create_feature_sets():
     return_features=basic_features+important_features+remaining_features
 
 
-    # Dealer Features
-    dealer_features=['profile_merge','Ward', 'Constitution','BooleanRegisteredIEC',\
+    # Dealer Features - add 'Ward'
+    dealer_features=['profile_merge', 'Constitution','BooleanRegisteredIEC',\
                      'BooleanRegisteredCE','BooleanServiceTax','StartYear',\
                      'DummyManufacturer','DummyRetailer','DummyWholeSaler',\
                      'DummyInterStateSeller','DummyInterStatePurchaser','DummyWorkContractor',\
@@ -393,15 +394,15 @@ def explore_classification(label_var='bogus_flag',create_plots=False):
         legends=["Return features","Profile features","Network features","1 + 2","1 + 3","2 + 3","1 + 2 + 3"]
         #legends=["return_features","ds_features","return_features+ds_features"]
 
-        plot=compare_models(rf_models,legends, of=r'H:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Graphs\{label}_comparison_plot_AllCombinations_minusq12_numericmerge_withds.html'.format(label=label_var),\
+        plot=compare_models(rf_models,legends, of=r'H:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Graphs\{label}_comparison_plot_AllCombinations_minusq12_numericmerge_withds.html'.format(label=label_var),\
                             title='Comparing All Models, {label}'.format(label=label_var))
         show(plot)
 
         for i in xrange(len(rf_models)):
-            h2o.save_model(rf_models[i],path=r'H:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\diff_feature_sets\20190227')
+            h2o.save_model(rf_models[i],path=r'H:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\diff_feature_sets\20190419')
 
         for i in xrange(7):
-            show(analyze_model(rf_models[i],of=r"H:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Graphs\{}_model{}_v2_numericmerge_withds.html".format(label_var,i+1),n_rows=30))
+            show(analyze_model(rf_models[i],of=r"H:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Graphs\{}_model{}_v2_numericmerge_withds.html".format(label_var,i+1),n_rows=30))
 
     file_name = r'Z:\Predictions_{label}_v2_numericmerge_withDS.csv'.format(label=label_var)
     generate_predictions(rf_models,ValidData,file_name,'{label}_Model'.format(label=label_var))
@@ -409,7 +410,7 @@ def explore_classification(label_var='bogus_flag',create_plots=False):
 
     # todo: Shekhar has other variations on the training and testing there, which I can put into this framework using variables.
 
-def load_models(model_dir_path=r'HH:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\diff_feature_sets\20170515'):
+def load_models(model_dir_path=r'HH:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\diff_feature_sets\20170515'):
     models = map(h2o.load_model,glob.glob(os.path.join(model_dir_path,'*')))
     return models
 
@@ -519,7 +520,7 @@ def probabilistic_labels2weights(df,prob_label_col='prob_bogus',label_var='is_bo
         df_weighted = pd.concat([df,df2],axis=0)
     return df_weighted
 
-def cv_predictions_each_tax_period(feature_table,label_var='bogus_flag',k_folds=8,feature_set=None,model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions',save_predictions_as_csv=False,model=None):
+def cv_predictions_each_tax_period(feature_table,label_var='bogus_flag',k_folds=8,feature_set=None,model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions',save_predictions_as_csv=False,model=None):
     """
     create predictions for the entire dataset (each row is firm X quarter) using cross-validation
     returns a (DataFrame of firm-period predictions, list of models)
@@ -579,11 +580,11 @@ def cv_predictions_each_tax_period(feature_table,label_var='bogus_flag',k_folds=
      
     if save_predictions_as_csv:
         firm_period_predictions.to_csv(r"Z:\firm_period_predictions.csv")
-        # D:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\cv_predictions\20170524\
+        # D:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\cv_predictions\20170524\
 
     return firm_period_predictions,model
 
-# def cv_predictions_each_tax_period_k_models(feature_table,label_var='bogus_flag',k_folds=8,feature_set=None,model_save_dir=r'D:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\cv_predictions\20170524',save_predictions_as_csv=False):
+# def cv_predictions_each_tax_period_k_models(feature_table,label_var='bogus_flag',k_folds=8,feature_set=None,model_save_dir=r'D:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\cv_predictions\20170524',save_predictions_as_csv=False):
 #     """
 #     create predictions for the entire dataset (each row is firm X quarter) using cross-validation
 #     returns a (DataFrame of firm-period predictions, list of models)
@@ -689,7 +690,7 @@ def point_in_time_simulations():
         point_in_time_h2o = h2o.import_file(r"Z:\temp.csv")
         #point_in_time_h2o = h2o.H2OFrame(point_in_time_pdfemq12.drop('DealerLastTaxQuarter',axis=1))
         print time.ctime()
-        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_q{:02d}".format(t)
+        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_q{:02d}".format(t)
         try:
             firm_period_predictions_t,cv_model_t = cv_predictions_each_tax_period(point_in_time_h2o,model_save_dir=save_dir)         
             firm_period_predictions_t.to_csv(save_dir+r"\point_in_time_firm_period_predictions_q{:02d}.csv".format(t),index=False)
@@ -716,7 +717,7 @@ def point_in_time_simulations():
         point_in_time_h2o = h2o.import_file(r"Z:\temp.csv")
         #point_in_time_h2o = h2o.H2OFrame(point_in_time_pdfemq12.drop('DealerLastTaxQuarter',axis=1))
         print time.ctime()
-        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_q{:02d}".format(t)
+        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_q{:02d}".format(t)
         try:
             firm_period_predictions_t,cv_model_t = cv_predictions_each_tax_period(point_in_time_h2o,model_save_dir=save_dir)         
             firm_period_predictions_t.to_csv(save_dir+r"\point_in_time_firm_period_predictions_q{:02d}.csv".format(t),index=False)
@@ -744,7 +745,7 @@ def point_in_time_simulations():
         point_in_time_h2o = h2o.import_file(r"Z:\temp.csv")
         #point_in_time_h2o = h2o.H2OFrame(point_in_time_pdfemq12.drop('DealerLastTaxQuarter',axis=1))
         print time.ctime()
-        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_q{:02d}".format(t)
+        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_q{:02d}".format(t)
         try:
             firm_period_predictions_t,cv_model_t = cv_predictions_each_tax_period(point_in_time_h2o,model_save_dir=save_dir)         
             firm_period_predictions_t.to_csv(save_dir+r"\point_in_time_firm_period_predictions_q{:02d}.csv".format(t),index=False)
@@ -761,7 +762,7 @@ def point_in_time_simulations():
         print t
         print time.ctime()
         print '-'*30
-        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_q{:02d}".format(t)
+        save_dir = r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_q{:02d}".format(t)
         firm_period_predictions_t = pd.read_csv(save_dir+r"\point_in_time_firm_period_predictions_q{:02d}.csv".format(t))
         assessment_1 = point_in_time_assess_performance(firm_period_predictions_t,t,pdfemq12,save_dir=save_dir)
         assessment_list.append(assessment_1)  
@@ -769,7 +770,7 @@ def point_in_time_simulations():
     assessments = {}
     for criterion in ['performance','revenue','performance_revenue_optimized','revenue_optimized']:
         assessments[criterion] = pd.concat(col(assessment_list,criterion)).reset_index()
-        assessments[criterion].to_csv(r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\cv_predictions\20190227\point_in_time_{}.csv'.format(criterion),index=False)
+        assessments[criterion].to_csv(r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\cv_predictions\20190419\point_in_time_{}.csv'.format(criterion),index=False)
     analyze_performances(assessments['performance'])
 
 def get_future_predictions(firm_period_predictions,t,pdfemq12,model_score_col='model_score_bogus_flag',label_var='bogus_flag'):
@@ -809,7 +810,7 @@ def retrieve_predictions():
     all_preds = {}
     for t in xrange(10,21,2):
         print t,
-        save_dir = r"H:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\cv_predictions\20171226\point_in_time_q{:02d}".format(t)
+        save_dir = r"H:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\cv_predictions\20171226\point_in_time_q{:02d}".format(t)
         csv_path = save_dir+r"\point_in_time_firm_period_predictions_q{:02d}.csv".format(t)
         firm_period_predictions_t = pd.read_csv(csv_path)
         all_preds[t] = firm_period_predictions_t
@@ -853,17 +854,17 @@ def stats_for_paper():
     pdfemq12.groupby('bogus_flag')['Mtin'].nunique()
 
     # all time CV performance ##############Ashwin Comment: How was this file generated
-    firm_period_predictions_alltime = pd.read_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\output_data\firm_period_predictions20190227.csv")
+    firm_period_predictions_alltime = pd.read_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\output_data\firm_period_predictions20190419.csv")
     avg_predictions = firm_period_predictions_alltime.groupby('Mtin')[['bogus_flag','model_score_bogus_flag']].mean()
     perf = performance_on_top_recommendations(avg_predictions,model_score_col,label_var,1,plot=False)
     print perf
-    perf.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_2013\Models\cv_predictions\20190227\alltime_cv_avg_performance.csv")
+    perf.to_csv(r"H:\Ashwin\BogusFirmCatching_minus_glm_ward\Models\cv_predictions\20190419\alltime_cv_avg_performance.csv")
     all_preds = retrieve_predictions()
     assessment_list = []
     axes = None
     for t in xrange(10,29,2):
         print t,
-        # save_dir = r"D:\shekhar_code_github\BogusFirmCatching_minus_glm_2013\Models\cv_predictions\20171226\point_in_time_q{:02d}".format(t)
+        # save_dir = r"D:\shekhar_code_github\BogusFirmCatching_minus_glm_ward\Models\cv_predictions\20171226\point_in_time_q{:02d}".format(t)
         firm_period_predictions_t = all_preds[t]
         future_predictions = get_future_predictions(firm_period_predictions_t,t,femq12,model_score_col,label_var)
         axes = plot_success_on_top_predictions_continuous(future_predictions,400,axes=axes,label='t={:02d}'.format(t))
@@ -902,13 +903,13 @@ def different_feature_sets_save_predictions(ffemq12):
         print '-'*30
         print time.ctime()
         try:
-            model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\diff_feature_sets\20190227\feature_set_{}'.format(i)
+            model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\diff_feature_sets\20190419\feature_set_{}'.format(i)
             if not os.path.exists(model_save_dir):
                 os.mkdir(model_save_dir)
-            firm_period_predictions,cv_model = cv_predictions_each_tax_period(ffemq12,feature_set=feature_set,model_save_dir=model_save_dir)
-            firm_period_predictions.to_csv(os.path.join(model_save_dir,"firm_period_predictions20190227.csv"),index=False)
+            firm_period_predictions,cv_model = cv_predictions_each_tax_period(ffemq12,feature_set=feature_set, model_save_dir=model_save_dir)
+            firm_period_predictions.to_csv(os.path.join(model_save_dir,"firm_period_predictions20190419.csv"),index=False)
             avg_predictions = firm_period_predictions.groupby('Mtin').mean()
-            performance_on_top_recommendations(avg_predictions,model_score_col,label_var,1,plot=False).to_csv(os.path.join(model_save_dir,"avg_predictions_performance_20190227.csv"))
+            performance_on_top_recommendations(avg_predictions,model_score_col,label_var,1,plot=False).to_csv(os.path.join(model_save_dir,"avg_predictions_performance_20190419.csv"))
         except Exception as exc:
             print 'something wrong'
             print exc
@@ -917,17 +918,17 @@ def different_feature_sets_betas_plot():
     axes = None
     for i in lrange(FEATURE_SETS):
         print i,
-        model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\diff_feature_sets\20190227\feature_set_{}'.format(i)
-        firm_period_predictions = pd.read_csv(os.path.join(model_save_dir,"firm_period_predictions20190227.csv"))
+        model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\diff_feature_sets\20190419\feature_set_{}'.format(i)
+        firm_period_predictions = pd.read_csv(os.path.join(model_save_dir,"firm_period_predictions20190419.csv"))
         avg_predictions = firm_period_predictions.groupby('Mtin').mean()
         betas = predictions2betas_curve(avg_predictions,model_score_col,label_var,return_betas=True,plot_betas=False)
-        betas.to_csv(os.path.join(model_save_dir,"betas20190227.csv"))
+        betas.to_csv(os.path.join(model_save_dir,"betas20190419.csv"))
         fs_name = feature_sets_names[i]
         axes = predictions2betas_curve(avg_predictions,model_score_col,label_var,return_betas=False,plot_betas=True,label=fs_name,axes=axes)
     axes.set_title('betas curves for various feature sets'.title())
     plt.legend()
 
-CLASSIFIER_DATE_STR = '20190227'
+CLASSIFIER_DATE_STR = '20190419'
 CLASSIFIERS = {
 'RandomForest': H2ORandomForestEstimator(ntrees=200, keep_cross_validation_predictions=True, stopping_rounds=2, score_each_iteration=True, model_id="rf_cv_all_folds_"+CLASSIFIER_DATE_STR, seed=1000000),
 'RandomForest_depth6': H2ORandomForestEstimator(ntrees=200, max_depth=6,keep_cross_validation_predictions=True, stopping_rounds=2, score_each_iteration=True, model_id="rf_cv_all_folds_"+CLASSIFIER_DATE_STR, seed=1000000),
@@ -948,7 +949,7 @@ def different_classifiers_save_predictions(ffemq12,model_score_col='model_score_
         print '-'*30
         print time.ctime()
         try:
-            model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\diff_classifiers\{}\classifier_{}'.format(CLASSIFIER_DATE_STR,algo_name)
+            model_save_dir=r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\diff_classifiers\{}\classifier_{}'.format(CLASSIFIER_DATE_STR,algo_name)
             if not os.path.exists(model_save_dir):
                 os.mkdir(model_save_dir)
             firm_period_predictions,cv_model = cv_predictions_each_tax_period(ffemq12,feature_set=None,model_save_dir=model_save_dir,model=model)
@@ -963,7 +964,7 @@ def different_classifiers_performance_plots_files(model_score_col='model_score_b
     """
     Load CV predictions of different classification algorithms, calculate betas, save and plot curves.
     """
-    parent_dir = r'H:\Ashwin\BogusFirmCatching_minus_glm_2013\models\diff_classifiers\{}'.format(CLASSIFIER_DATE_STR)
+    parent_dir = r'H:\Ashwin\BogusFirmCatching_minus_glm_ward\models\diff_classifiers\{}'.format(CLASSIFIER_DATE_STR)
     axes = None
     all_top_perfs = []
     for algo_name,model in CLASSIFIERS.items():
